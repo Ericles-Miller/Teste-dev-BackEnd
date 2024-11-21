@@ -1,7 +1,16 @@
 # Desafio Backend - Node.js com TypeScript
 
 ## Objetivo
-Criar uma aplicação backend em Node.js utilizando TypeScript que permita o upload de uma planilha com 100 mil linhas, processe e armazene os dados em um banco de dados PostgreSQL, e disponibilize uma API para acesso a esses dados com funcionalidades avançadas.
+Criar uma aplicação backend em Node.js utilizando TypeScript que permita:
+
+- O upload de uma planilha com **100 mil linhas**.
+- Processar e armazenar os dados em um banco de dados PostgreSQL.
+- Disponibilizar uma **API avançada** para acesso a esses dados.
+
+---
+
+## Descrição do Desafio
+Desenvolver uma aplicação que atenda aos seguintes requisitos **funcionais** e **não funcionais**, aplicando boas práticas de desenvolvimento e fornecendo explicações detalhadas sobre o código e as escolhas técnicas realizadas.
 
 ---
 
@@ -9,25 +18,28 @@ Criar uma aplicação backend em Node.js utilizando TypeScript que permita o upl
 
 ### 1. Upload de Arquivo
 - **Endpoint de Upload**:
-  - Criar um endpoint para upload de planilhas (formato a ser especificado, como CSV ou XLSX).
-  - A planilha conterá 100 mil linhas com dados que deverão ser processados.
+  - Permitir o upload de uma planilha em formato especificado (ex: CSV ou XLSX).
+  - A planilha conterá 100 mil linhas de dados a serem processados.
+  - **Swagger**: O upload deve ser possível pela interface interativa da documentação Swagger.
 
 - **Processamento Assíncrono**:
-  - O processamento do arquivo deve ser assíncrono utilizando filas (ex: BullMQ).
-  - Garantir que o upload não bloqueie a thread principal e que o usuário receba uma resposta imediatamente após o envio.
+  - Processar o arquivo utilizando **filas** (ex: BullMQ) para garantir que o upload não bloqueie a thread principal.
+  - O usuário deve receber uma resposta imediatamente após o envio do arquivo.
 
 - **Feedback de Status**:
-  - Implementar uma forma para que o usuário verifique o status do processamento (ex: em andamento, concluído, erro).
-  - Suporte a polling em um endpoint ou via WebSockets.
+  - Implementar uma forma de verificar o status do processamento (ex: "em andamento", "concluído", "erro").
+  - O feedback pode ser fornecido por polling em um endpoint específico ou via websockets.
 
 ### 2. API de Dados
-- **Endpoints para Acesso aos Dados**:
-  - Endpoints para listar, filtrar, ordenar e buscar nos dados armazenados.
-  - Implementar paginação eficiente para grandes volumes de dados (ex: cursor ou keyset pagination).
+- **Endpoints**:
+  - Listar, filtrar, ordenar e buscar dados armazenados.
+  - Retornar dados de forma paginada.
+
+- **Paginação Eficiente**:
+  - Utilizar paginação baseada em **cursor** ou **keyset pagination** para garantir performance em grandes volumes de dados.
 
 - **Filtragem e Ordenação Avançadas**:
-  - Permitir filtragem pelos campos:
-    - `GivenName`, `City`, `TropicalZodiac`, `Occupation`, `Vehicle`, `CountryFull`.
+  - Permitir filtros pelos campos: `GivenName`, `City`, `TropicalZodiac`, `Occupation`, `Vehicle`, `CountryFull`.
   - Suportar múltiplos critérios de ordenação.
 
 - **Informação Adicional no Response**:
@@ -38,81 +50,74 @@ Criar uma aplicação backend em Node.js utilizando TypeScript que permita o upl
 ## Requisitos Não Funcionais
 
 ### 1. Persistência de Dados
-- Banco de Dados:
-  - Utilizar PostgreSQL.
-  - Modelar o banco de forma eficiente, com índices e tipos de dados apropriados.
+- Banco de dados: **PostgreSQL**.
+- Modelagem eficiente com uso de índices e tipos de dados apropriados.
 
 ### 2. Processamento Assíncrono e Filas
-- Utilizar uma tecnologia de filas (ex: BullMQ, RabbitMQ, Kafka).
-- Garantir confiabilidade e escalabilidade do processamento.
-- Implementar controle de concorrência para evitar problemas como race conditions ou deadlocks.
+- Utilizar **BullMQ**, RabbitMQ ou Kafka para gerenciamento do processamento.
+- Controlar concorrência para evitar problemas como **race conditions**.
 
 ### 3. Escalabilidade e Performance
-- **Otimização de Performance**:
+- **Performance**:
   - Otimizar o tempo de resposta das rotas.
-  - Retornar o tempo de execução das operações nas respostas.
+  - Retornar um contador do tempo de execução em cada operação.
 
 - **Escalabilidade**:
   - Documentar como a aplicação pode ser escalada horizontalmente.
 
-- **Uso de Cache**:
-  - Implementar cache (ex: Redis) para melhorar a performance em consultas frequentes.
+- **Cache**:
+  - Considerar o uso de cache (ex: Redis) para consultas frequentes.
 
 ### 4. Documentação e Boas Práticas
-- Fornecer explicações detalhadas sobre o código e escolhas técnicas.
-- Utilizar ESLint e Prettier para garantir padrões de código consistentes.
-- Estruturar o projeto de forma modular e aplicar princípios de design como SOLID e DRY.
+- **Explicação do Código**:
+  - Fornecer explicações detalhadas e comentários para esclarecer partes complexas.
+
+- **README**:
+  - Incluir instruções claras para configuração e execução do projeto.
+
+- **Documentação da API**:
+  - Utilizar **Swagger** para documentar e interagir com os endpoints.
+
+- **Padrões de Código**:
+  - Seguir princípios **SOLID** e **DRY**.
+  - Usar ferramentas como **ESLint** e **Prettier**.
 
 ---
 
 ## Diferenciais
 - **Deploy via Vercel**:
-  - Entregar a aplicação através da plataforma Vercel será considerado um diferencial.
+  - Demonstrar a entrega da aplicação hospedada na plataforma Vercel.
+  
+- **Logs e Monitoramento**:
+  - Implementar logs estruturados para facilitar identificação de problemas.
 
 ---
 
-## Entrega
-
-### Repositório Git
-- Disponibilizar o código em um repositório público ou privado (conceder acesso se necessário).
-
-### Instruções de Execução
-- Incluir um passo-a-passo claro para:
-  - Instalar dependências.
-  - Configurar variáveis de ambiente.
-  - Executar a aplicação.
-
-### Documentação da Aplicação
-- Explicações detalhadas sobre o código, arquitetura e justificativas técnicas.
-- Descrever como cada parte da aplicação funciona e como os componentes interagem.
-
----
-
-## Considerações Finais
-- **Avaliação de Desempenho**:
-  - Desempenho ao lidar com grandes volumes de dados será o foco principal.
-
-- **Justificativas Técnicas**:
-  - Justificar escolhas arquiteturais, tecnológicas e bibliotecas.
-
-- **Criatividade e Inovação**:
-  - Adicione funcionalidades extras para melhorar eficiência, usabilidade ou manutenibilidade.
+## Instruções de Entrega
+1. Disponibilizar o código em um repositório público ou privado no GitHub.
+2. Incluir:
+   - Instruções claras de instalação e configuração no `README.md`.
+   - Scripts para inicialização e deploy local.
+   - Documentação detalhada no Swagger.
 
 ---
 
 ## Dicas
-- **Gerenciamento de Dependências**:
-  - Utilize `npm` ou `yarn` e mantenha o `package.json` atualizado.
-
-- **Configurações Sensíveis**:
-  - Use variáveis de ambiente (ex: com dotenv) e evite expor informações sensíveis no código.
-
-- **Manutenibilidade**:
-  - Estruture o projeto de forma modular para facilitar manutenções futuras.
-
-- **Logs e Monitoramento**:
-  - Implementar logs estruturados para facilitar a identificação de problemas.
+- Utilize variáveis de ambiente para configurações sensíveis com o auxílio de bibliotecas como **dotenv**.
+- Estruture o projeto de forma modular para facilitar manutenção e escalabilidade.
+- Garanta a clareza do código e da documentação para demonstrar domínio técnico.
 
 ---
 
-Boa sorte! 🚀
+## Avaliação
+O desafio será avaliado com base em:
+1. **Desempenho**:
+   - Tempo de processamento do upload e resposta da API.
+2. **Justificativas Técnicas**:
+   - Decisões arquiteturais e tecnológicas.
+3. **Criatividade e Inovação**:
+   - Funcionalidades extras que agreguem valor.
+4. **Documentação**:
+   - Qualidade e clareza do `README.md` e dos comentários no código.
+
+Boa sorte!
