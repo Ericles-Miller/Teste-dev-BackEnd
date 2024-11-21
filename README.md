@@ -113,3 +113,62 @@ O desafio será avaliado com base em:
    - Qualidade e clareza do `Explicacao.md` e dos comentários no código.
 
 **Boa sorte e divirta-se!** 🚀
+
+---
+
+## Exemplos dos endpoints
+
+1. **Upload de Arquivo**:
+```json  
+{
+  "message": "Arquivo recebido com sucesso. Processamento iniciado.",
+  "uploadId": "123e4567-e89b-12d3-a456-426614174000"
+}
+```  
+
+2. **Status do Processamento**:
+```json  
+{
+  "uploadId": "123e4567-e89b-12d3-a456-426614174000",
+  "status": "concluído" // ou "em processamento", "erro"
+}
+```  
+
+3. **Listagem de Dados**:
+```json  
+{
+  "data": [
+    {
+      "GivenName": "Maria",
+      "Surname": "Silva",
+      "City": "São Paulo",
+      "TropicalZodiac": "Virgem",
+      "Occupation": "Advogada",
+      "Vehicle": "Honda Civic",
+      "CountryFull": "Brasil"
+      // ... outros campos
+    },
+    // ... mais registros
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "perPage": 20,
+    "totalPages": 5000,
+    "totalRecords": 100000,
+    "currentCount": 20
+  }
+}
+```  
+
+4. **Exemplo de Tempo de Execução**:
+```json 
+{
+  "data": [
+    // ... registros
+  ],
+  "pagination": {
+    // ... informações de paginação
+  },
+  "executionTime": "120ms"
+}
+```  
