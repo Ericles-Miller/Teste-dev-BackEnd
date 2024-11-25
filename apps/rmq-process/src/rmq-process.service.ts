@@ -5,7 +5,7 @@ import * as path from 'path';
 
 @Injectable()
 export class RmqProcessService {
-  async uploadFile(data: any, context: RmqContext) {
+  async uploadFile(data: any, context: RmqContext): Promise<void> {
     try {
       const chanel = context.getChannelRef();
       const originalMSg = context.getMessage();
