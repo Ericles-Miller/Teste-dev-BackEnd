@@ -1,99 +1,174 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🚀 Desafio Backend - Node.js com TypeScript
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 🎯 Objetivo
+Criar uma aplicação backend em Node.js utilizando TypeScript que permita:
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- O upload de uma planilha com **100 mil linhas** 📄.
+- Processar e armazenar os dados em um banco de dados PostgreSQL 🛢️.
+- Disponibilizar uma **API avançada** para acesso a esses dados 🔍.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📝 Descrição do Desafio
+Desenvolver uma aplicação que atenda aos seguintes requisitos **funcionais** e **não funcionais**, aplicando boas práticas de desenvolvimento e fornecendo explicações detalhadas sobre o código e as escolhas técnicas realizadas.
 
-## Project setup
+---
 
-```bash
-$ yarn install
-```
+## ✅ Requisitos Funcionais
 
-## Compile and run the project
+### 1. 📤 Upload de Arquivo
+- **Endpoint de Upload**:
+  - Fazer o upload da planilha _baseSerImportada.csv_ na raiz do projeto.
+  - A planilha conterá 100 mil linhas de dados a serem processados.
+  - **Swagger**: O upload deve ser possível pela interface interativa da documentação Swagger.
 
-```bash
-# development
-$ yarn run start
+- **⚡ Processamento Assíncrono**:
+  - Processar o arquivo utilizando **filas** (ex: BullMQ, RabbitMQ) para garantir que o upload não bloqueie a thread principal.
+  - O usuário deve receber uma resposta imediatamente após o envio do arquivo.
 
-# watch mode
-$ yarn run start:dev
+- **📊 Feedback de Status**:
+  - Implementar uma forma de verificar o status do processamento (ex: "em andamento", "concluído", "erro").
+  - O feedback pode ser fornecido por polling em um endpoint específico ou via websockets 🔄.
 
-# production mode
-$ yarn run start:prod
-```
+### 2. 🔎 API de Dados
+- **Endpoints**:
+  - Listar, filtrar, ordenar e buscar dados armazenados.
+  - Retornar dados de forma paginada 📄.
 
-## Run tests
+- **📌 Paginação Eficiente**:
+  - Utilizar paginação baseada em **cursor** ou **keyset pagination** para garantir performance em grandes volumes de dados.
 
-```bash
-# unit tests
-$ yarn run test
+- **🔧 Filtragem e Ordenação Avançadas**:
+  - Permitir filtros pelos campos: `GivenName`, `City`, `TropicalZodiac`, `Occupation`, `Vehicle`, `CountryFull`.
+  - Suportar múltiplos critérios de ordenação.
 
-# e2e tests
-$ yarn run test:e2e
+- **📋 Informação Adicional no Response**:
+  - Incluir a quantidade de registros retornados na página atual.
 
-# test coverage
-$ yarn run test:cov
-```
+---
 
-## Deployment
+## 🛠️ Requisitos Não Funcionais
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### 1. 📂 Persistência de Dados
+- Banco de dados: **PostgreSQL**.
+- Modelagem eficiente com uso de índices e tipos de dados apropriados.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 2. ⚙️ Processamento Assíncrono e Filas
+- Utilizar **BullMQ**, RabbitMQ ou Kafka para gerenciamento do processamento.
+- Controlar concorrência para evitar problemas como **race conditions**.
 
-```bash
-$ yarn install -g mau
-$ mau deploy
-```
+### 3. 🌐 Escalabilidade e Performance
+- **Performance**:
+  - Otimizar o tempo de resposta das rotas 🕒.
+  - Retornar um contador do tempo de execução em cada operação.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- **Escalabilidade**:
+  - Documentar como a aplicação pode ser escalada horizontalmente 🔀.
 
-## Resources
+- **🧰 Cache**:
+  - Considerar o uso de cache (ex: Redis) para consultas frequentes.
 
-Check out a few resources that may come in handy when working with NestJS:
+### 4. 📚 Documentação e Boas Práticas
+- **Explicação do Código**:
+  - Fornecer explicações detalhadas e comentários para esclarecer partes complexas 🛠️.
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- **📖 README**:
+  - Incluir instruções claras para configuração e execução do projeto.
 
-## Support
+- **📑 Documentação da API**:
+  - Utilizar **Swagger** para documentar e interagir com os endpoints.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+---
 
-## Stay in touch
+## ✨ Diferenciais
+- **Deploy via Vercel**:
+  - Demonstrar a entrega da aplicação hospedada na plataforma Vercel 🌐.
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+---
 
-## License
+## 📦 Instruções de Entrega
+1. Disponibilizar o código em um repositório público ou privado no GitHub.
+2. Incluir:
+   - Instruções claras de instalação e configuração no `Explicacao.md` 📜.
+   - Scripts para inicialização e deploy local ⚡.
+   - Documentação detalhada no Swagger.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## 💡 Dicas
+- Estruture o projeto de forma modular para facilitar manutenção e escalabilidade 🛠️.
+- Garanta a clareza do código e da documentação para demonstrar domínio técnico 📚.
+
+---
+
+## 🏆 Avaliação
+O desafio será avaliado com base em:
+1. **📊 Desempenho**:
+   - Tempo de processamento do upload e resposta da API.
+2. **📘 Justificativas Técnicas**:
+   - Decisões arquiteturais e tecnológicas.
+3. **🎨 Criatividade e Inovação**:
+   - Funcionalidades extras que agreguem valor.
+4. **📚 Documentação**:
+   - Qualidade e clareza do `Explicacao.md` e dos comentários no código.
+
+**Boa sorte e divirta-se!** 🚀
+
+---
+
+## Exemplos dos endpoints
+
+1. **Upload de Arquivo**:
+```json  
+{
+  "message": "Arquivo recebido com sucesso. Processamento iniciado.",
+  "uploadId": "123e4567-e89b-12d3-a456-426614174000"
+}
+```  
+
+2. **Status do Processamento**:
+```json  
+{
+  "uploadId": "123e4567-e89b-12d3-a456-426614174000",
+  "status": "concluído" // ou "em processamento", "erro"
+}
+```  
+
+3. **Listagem de Dados**:
+```json  
+{
+  "data": [
+    {
+      "GivenName": "Maria",
+      "Surname": "Silva",
+      "City": "São Paulo",
+      "TropicalZodiac": "Virgem",
+      "Occupation": "Advogada",
+      "Vehicle": "Honda Civic",
+      "CountryFull": "Brasil"
+      // ... outros campos
+    },
+    // ... mais registros
+  ],
+  "pagination": {
+    "currentPage": 1,
+    "perPage": 20,
+    "totalPages": 5000,
+    "totalRecords": 100000,
+    "currentCount": 20
+  }
+}
+```  
+
+4. **Exemplo de Tempo de Execução**:
+```json 
+{
+  "data": [
+    // ... registros
+  ],
+  "pagination": {
+    // ... informações de paginação
+  },
+  "executionTime": "120ms"
+}
+```  
