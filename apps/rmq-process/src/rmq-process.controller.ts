@@ -6,8 +6,8 @@ import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices'
 export class RmqProcessController {
   constructor(private readonly rmqProcessService: RmqProcessService) {}
 
-  @MessagePattern('test-rmq')
-  async getHello(@Payload() data: number[], @Ctx() context: RmqContext) {
-    return this.rmqProcessService.getHello(data, context);
+  @MessagePattern('file-upload-queue')
+  async uploadFile(@Payload() data: number[], @Ctx() context: RmqContext) {
+    return this.rmqProcessService.uploadFile(data, context);
   }
 }

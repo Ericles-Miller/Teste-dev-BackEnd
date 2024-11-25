@@ -1,14 +1,29 @@
 import { Injectable } from '@nestjs/common';
 import { RmqContext } from '@nestjs/microservices';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class RmqProcessService {
-  async getHello(data: any, context: RmqContext) {
-    console.log(data);
+  async uploadFile(data: any, context: RmqContext) {
+    try {
+      const chanel = context.getChannelRef();
+      const originalMSg = context.getMessage();
 
-    const chanel = context.getChannelRef();
-    const originalMSg = context.getMessage();
+      const uploadDir = path.resolve(__dirname, '../../tmp');
+      const fileName = `file-${Date.now()}.csv`;
+      const filePath = path.join(uploadDir, fileName);
 
-    chanel.ack(originalMSg);
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
+      console.log(`File save with successfully: ${filePath}`);
+
+      chanel.ack(originalMSg);
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
