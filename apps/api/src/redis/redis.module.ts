@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-import { RedisController } from './redis.controller';
-import { RedisService } from './redis.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { RedisProcessService } from 'apps/redis-process/src/redis-process.service';
 
 @Module({
   imports: [
     ClientsModule.register([
       {
-        name: 'MATH_SERVICE',
+        name: 'REDIS_SERVICE',
         transport: Transport.REDIS,
         options: {
           host: 'localhost',
@@ -16,7 +15,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       },
     ]),
   ],
-  controllers: [RedisController],
-  providers: [RedisService],
+  providers: [RedisProcessService],
+  exports: [RedisProcessService],
 })
 export class RedisModule {}

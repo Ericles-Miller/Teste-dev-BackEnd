@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { RedisModule } from './../src/redis.module';
+import { RedisModule } from '../src/redis-process.module';
 
 describe('RedisController (e2e)', () => {
   let app: INestApplication;
