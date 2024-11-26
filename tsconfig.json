@@ -11,8 +11,15 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@api/*": ["apps/api/src/*"],
-      "@rmq/*": ["apps/rmq-process/src/*"]
+      "@api/*": [
+        "apps/api/src/*"
+      ],
+      "@rmq/*": [
+        "apps/rmq-process/src/*"
+      ],
+      "@redis/*": [
+        "apps/redis-process/src/*"
+      ]
     },
     "incremental": true,
     "skipLibCheck": true,
@@ -20,6 +27,6 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
+    "noFallthroughCasesInSwitch": false
   }
 }
