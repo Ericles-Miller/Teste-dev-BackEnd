@@ -15,7 +15,7 @@ export class RmqProcessService {
     const originalMsg = context.getMessage();
 
     try {
-      const jobId = uuid();
+      const jobId = uuid(); // pegar o id vindo da interface
       const uploadDir = path.resolve(__dirname, '../../tmp');
       const filePath = path.join(uploadDir, `file-${jobId}.csv`);
 
@@ -35,6 +35,6 @@ export class RmqProcessService {
     }
   }
 
-  @MessagePattern('process-file')
+  @MessagePattern('process-file-queue')
   async readFile({ jobId, filePath }: ReadFileDto): Promise<void> {}
 }
