@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { RedisProcessService } from 'apps/redis-process/src/redis-process.service';
+import { RedisService } from './redis.service';
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ import { RedisProcessService } from 'apps/redis-process/src/redis-process.servic
       },
     ]),
   ],
-  providers: [RedisProcessService],
-  exports: [RedisProcessService],
+  providers: [RedisService],
+  exports: [RedisService],
 })
 export class RedisModule {}
