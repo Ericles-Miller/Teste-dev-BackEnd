@@ -14,8 +14,11 @@
       "@api/*": [
         "apps/api/src/*"
       ],
-      "@rmq/*": [
+      "@rmq-process/*": [
         "apps/rmq-process/src/*"
+      ],
+      "@redis-process/*": [
+        "apps/redis-process/src*"
       ]
     },
     "incremental": true,
