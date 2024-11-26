@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { dataSourceOptions } from './database/database.provider';
 import { ConfigModule } from '@nestjs/config';
+import { dataSourceOptions } from './database/database.provider';
 import { TestModule } from './test/test.module';
 import { ManagerFileModule } from './manager-file/manager-file.module';
-import { RedisService } from './redis/redis.service';
 import { RedisModule } from './redis/redis.module';
+import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
 
 @Module({
   imports: [
@@ -18,6 +17,6 @@ import { RedisModule } from './redis/redis.module';
     RedisModule,
   ],
   controllers: [],
-  providers: [RedisService],
+  providers: [],
 })
 export class AppModule {}

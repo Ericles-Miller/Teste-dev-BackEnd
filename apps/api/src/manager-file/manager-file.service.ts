@@ -15,6 +15,8 @@ export class ManagerFileService {
       fileBuffer: file.buffer.toString('base64'),
     });
 
+    // vou chamar para ler o arquivo e consumilo
+    // setar o staus do redis
     return uploadId;
   }
 
