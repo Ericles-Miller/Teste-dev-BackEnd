@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ManagerFileService } from './manager-file.service';
 import { ApiBody, ApiConsumes, ApiExtension, ApiTags } from '@nestjs/swagger';
@@ -19,10 +19,5 @@ export class ManagerFileController {
   @Post()
   uploadFile(@UploadedFile() file) {
     return this.managerFileService.uploadFile(file);
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.managerFileService.findOne(+id);
   }
 }

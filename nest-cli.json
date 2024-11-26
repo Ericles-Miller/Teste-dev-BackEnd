@@ -7,7 +7,7 @@
     "webpack": false
   },
   "monorepo": true,
-  "root": ".",
+  "root": "apps",
   "projects": {
     "api": {
       "type": "application",
@@ -29,11 +29,11 @@
     },
     "redis": {
       "type": "application",
-      "root": "apps/redis",
+      "root": "apps/redis-process",
       "entryFile": "main",
-      "sourceRoot": "apps/redis/src",
+      "sourceRoot": "apps/redis-process/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/redis/tsconfig.app.json"
+        "tsConfigPath": "apps/redis-process/tsconfig.app.json"
       }
     }
   }
