@@ -26,6 +26,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/rmq-process/tsconfig.app.json"
       }
+    },
+    "redis-process": {
+      "type": "application",
+      "root": "apps/redis-process",
+      "entryFile": "main",
+      "sourceRoot": "apps/redis-process/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/redis-process/tsconfig.app.json"
+      }
     }
   }
 }
