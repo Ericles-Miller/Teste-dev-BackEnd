@@ -5,6 +5,9 @@ import { dataSourceOptions } from './database/database.provider';
 import { ConfigModule } from '@nestjs/config';
 import { TestModule } from './test/test.module';
 import { ManagerFileModule } from './manager-file/manager-file.module';
+import { UsersModule } from './users/users.module';
+import { RedisService } from './redis/redis.service';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -13,8 +16,10 @@ import { ManagerFileModule } from './manager-file/manager-file.module';
     TestModule,
     TypeOrmModule.forRoot(dataSourceOptions),
     ManagerFileModule,
+    UsersModule,
+    RedisModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [RedisService],
 })
 export class AppModule {}
