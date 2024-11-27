@@ -1,23 +1,24 @@
 import { Injectable } from '@nestjs/common';
-import { MessagePattern, RmqContext } from '@nestjs/microservices';
+import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
 import * as fs from 'fs';
 import * as path from 'path';
-import { v7 as uuid } from 'uuid';
-import { ReadFileDto } from './Dtos/read-file.Dto';
+import { error } from 'console';
+import { ProcessFileDto } from 'apps/api/src/rabbitmq/dtos/process-file.dto';
+import { UsersService } from 'apps/api/src/users/users.service';
+import { CreateUserDto } from 'apps/api/src/users/dto/create-user.dto';
 
 @Injectable()
 export class RmqProcessService {
-  constructor() {} //private readonly rabbitmqService: RabbitmqService, //private readonly redisService: RedisService,
+  constructor(private readonly userService: UsersService) {} //private readonly rabbitmqService: RabbitmqService, //private readonly redisService: RedisService,
 
   @MessagePattern('file-upload-queue')
-  async uploadFile(data: any, context: RmqContext): Promise<void> {
+  async uploadFile(@Payload() data: ProcessFileDto, @Ctx() context: RmqContext): Promise<void> {
     const chanel = context.getChannelRef();
     const originalMsg = context.getMessage();
 
     try {
-      const jobId = uuid(); // pegar o id vindo da interface
       const uploadDir = path.resolve(__dirname, '../../tmp');
-      const filePath = path.join(uploadDir, `file-${jobId}.csv`);
+      const filePath = path.join(uploadDir, `file-${data.uploadId}.csv`);
 
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
@@ -36,5 +37,17 @@ export class RmqProcessService {
   }
 
   @MessagePattern('process-file-queue')
-  async readFile({ jobId, filePath }: ReadFileDto): Promise<void> {}
+  async readFile(data: CreateUserDto, context: RmqContext): Promise<void> {
+    const chanel = context.getChannelRef();
+    const originalMsg = context.getMessage();
+
+    try {
+      await this.userService.create(data);
+      chanel.ack(originalMsg);
+    } catch {
+      console.log(error);
+
+      chanel.nack(originalMsg);
+    }
+  }
 }

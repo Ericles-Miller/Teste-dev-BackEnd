@@ -10,17 +10,7 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    "paths": {
-      "@api/*": [
-        "apps/api/src/*"
-      ],
-      "@rmq/*": [
-        "apps/rmq-process/src/*"
-      ],
-      "@redis/*": [
-        "apps/redis-process/src/*"
-      ]
-    },
+    "paths": {},
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,

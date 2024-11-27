@@ -5,5 +5,6 @@ import { RedisProcessService } from './redis-process.service';
   imports: [],
   controllers: [],
   providers: [RedisProcessService],
+  exports: [RedisProcessService],
 })
 export class RedisProcessModule {}

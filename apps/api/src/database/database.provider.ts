@@ -1,5 +1,6 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
+import { User } from '../users/entities/user.entity';
 
 dotenv.config();
 export const dataSourceOptions: DataSourceOptions = {
@@ -11,7 +12,7 @@ export const dataSourceOptions: DataSourceOptions = {
   port: Number(process.env.DATABASE_PORT),
   synchronize: false,
   logging: true,
-  entities: [],
+  entities: [User],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   migrationsRun: true,
 };

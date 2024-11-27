@@ -4,8 +4,10 @@ import { ConfigModule } from '@nestjs/config';
 import { dataSourceOptions } from './database/database.provider';
 import { TestModule } from './test/test.module';
 import { ManagerFileModule } from './manager-file/manager-file.module';
-import { RedisModule } from './redis/redis.module';
+import { UsersModule } from './users/users.module';
 import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
+import { RedisModule } from './redis/redis.module';
+import { RedisService } from './redis/redis.service';
 
 @Module({
   imports: [
@@ -14,9 +16,10 @@ import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
     TestModule,
     TypeOrmModule.forRoot(dataSourceOptions),
     ManagerFileModule,
+    UsersModule,
     RedisModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [RedisService],
 })
 export class AppModule {}
