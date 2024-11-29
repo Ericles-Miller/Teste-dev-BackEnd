@@ -1,48 +1,40 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": ".",
-  "root": ".",
+  "sourceRoot": "apps/challenge-flow/src",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": false
+    "webpack": true,
+    "tsConfigPath": "apps/challenge-flow/tsconfig.app.json"
   },
   "monorepo": true,
+  "root": "apps/challenge-flow",
   "projects": {
-    "api": {
+    "challenge-flow": {
       "type": "application",
-      "root": "apps/api",
+      "root": "apps/challenge-flow",
       "entryFile": "main",
-      "sourceRoot": "apps/api/src",
+      "sourceRoot": "apps/challenge-flow/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/api/tsconfig.app.json"
+        "tsConfigPath": "apps/challenge-flow/tsconfig.app.json"
       }
     },
-    "rmq-process": {
+    "rabbit-mq": {
       "type": "application",
-      "root": "apps/rmq-process",
+      "root": "apps/rabbit-mq",
       "entryFile": "main",
-      "sourceRoot": "apps/rmq-process/src",
+      "sourceRoot": "apps/rabbit-mq/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/rmq-process/tsconfig.app.json"
+        "tsConfigPath": "apps/rabbit-mq/tsconfig.app.json"
       }
     },
-    "redis-process": {
+    "redis": {
       "type": "application",
-      "root": "apps/redis-process",
+      "root": "apps/redis",
       "entryFile": "main",
-      "sourceRoot": "apps/redis-process/src",
+      "sourceRoot": "apps/redis/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/redis-process/tsconfig.app.json"
-      }
-    },
-    "test": {
-      "type": "application",
-      "root": "apps/test",
-      "entryFile": "main",
-      "sourceRoot": "apps/test/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/test/tsconfig.app.json"
+        "tsConfigPath": "apps/redis/tsconfig.app.json"
       }
     }
   }
