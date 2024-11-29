@@ -1,23 +1,23 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "apps/challenge-flow/src",
+  "sourceRoot": "apps",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": true,
-    "tsConfigPath": "apps/challenge-flow/tsconfig.app.json"
+    "webpack": false,
+    "tsConfigPath": "tsconfig.json"
   },
   "monorepo": true,
-  "root": "apps/challenge-flow",
+  "root": "apps",
   "projects": {
     "challenge-flow": {
-      "type": "application",
-      "root": "apps/challenge-flow",
-      "entryFile": "main",
-      "sourceRoot": "apps/challenge-flow/src",
-      "compilerOptions": {
-        "tsConfigPath": "apps/challenge-flow/tsconfig.app.json"
-      }
+    "type": "application",
+    "root": "apps/challenge-flow",
+    "sourceRoot": "apps/challenge-flow/src",
+    "entryFile": "src/main",
+    "compilerOptions": {
+      "tsConfigPath": "apps/challenge-flow/tsconfig.app.json"
+    }
     },
     "rabbit-mq": {
       "type": "application",

@@ -8,7 +8,7 @@ import * as path from 'path';
 
 @Injectable()
 export class RabbitMqService {
-  constructor(private readonly userService: UserService) {}
+  constructor() {} //private readonly userService: UserService
 
   @MessagePattern('file-upload-queue')
   async uploadFile(@Payload() data: ProcessFileDto, @Ctx() context: RmqContext): Promise<void> {
@@ -38,7 +38,7 @@ export class RabbitMqService {
     const originalMsg = context.getMessage();
 
     try {
-      await this.userService.create(data);
+      //await this.userService.create(data);
       chanel.ack(originalMsg);
     } catch {
       chanel.nack(originalMsg);

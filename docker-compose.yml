@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15.3-alpine
-    container_name: postgresChallengeFlow
+    container_name: pgChallengeFlow
     restart: always
     environment:
       POSTGRES_PASSWORD: mysecretpassword
@@ -15,7 +15,7 @@ services:
   
   rabbitmq:
     image: rabbitmq:3-management
-    container_name: rabbitmq
+    container_name: rabbit
     ports:
       - "5672:5672" # Porta usada pelos clientes e integradores
       - "15672:15672" # Porta da interface de administração do RabbitMQ
@@ -26,7 +26,7 @@ services:
       - rabbitmq_data:/var/lib/rabbitmq
   
   redis:
-    container_name: redis
+    container_name: redis1
     image: redis:7.0
     ports:
       - "6379:6379"
