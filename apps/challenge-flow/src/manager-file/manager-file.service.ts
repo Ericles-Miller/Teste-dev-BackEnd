@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import { createReadStream } from 'fs';
 import * as csv from 'csv-parser';
 import { v4 as uuid } from 'uuid';
-import { EStatus } from 'apps/redis/src/status.enumarator';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { ReadFileDto } from '../rabbit-mq/Dtos/read-file.dto';
 import { RabbitMqService } from '../rabbit-mq/rabbit-mq.service';
 import { RedisService } from '../redis/redis.service';
+import { Injectable } from '@nestjs/common';
+import { createReadStream } from 'fs';
+import { EStatus } from '../../../redis/src/status.enumarator';
 
 @Injectable()
 export class ManagerFileService {
@@ -18,7 +18,7 @@ export class ManagerFileService {
   async uploadFile(file: any): Promise<string> {
     const uploadId = uuid();
 
-    this.rabbitMqService.instance.emit('file-upload-queue', {
+    await this.rabbitMqService.instance.emit('file-upload-queue', {
       uploadId,
       fileName: file.originalname,
       fileBuffer: file.buffer.toString('base64'),

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Ctx, MessagePattern, Payload, RedisContext } from '@nestjs/microservices';
-import { SetStatusDto } from 'apps/challenge-flow/src/redis/Dtos/Set-status.dto';
 import Redis from 'ioredis';
+import { SetStatusDto } from '../../challenge-flow/src/redis/Dtos/Set-status.dto';
 
 @Injectable()
 export class RedisService {

@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
-import { ProcessFileDto } from 'apps/challenge-flow/src/redis/Dtos/process-file.dto';
-import { CreateUserDto } from 'apps/challenge-flow/src/user/dto/create-user.dto';
-import { UserService } from 'apps/challenge-flow/src/user/user.service';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ProcessFileDto } from '../../challenge-flow/src/redis/Dtos/process-file.dto';
+import { CreateUserDto } from '../../challenge-flow/src/user/dto/create-user.dto';
 
 @Injectable()
 export class RabbitMqService {
