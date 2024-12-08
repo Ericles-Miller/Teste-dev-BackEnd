@@ -1,31 +1,29 @@
+import { Message } from '@aws-sdk/client-sqs';
 import { Injectable } from '@nestjs/common';
-import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
+import { SqsMessageHandler } from '@ssut/nestjs-sqs';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as AWS from '@aws-sdk/client-sqs';
 
 @Injectable()
 export class RabbitMqProcessService {
-  @MessagePattern('file-upload-queue')
-  async fileProcess(@Payload() data: any, @Ctx() context: RmqContext): Promise<void> {
-    const chanel = context.getChannelRef();
-    const originalMsg = context.getMessage();
+  @SqsMessageHandler('MyQueue', false)
+  async fileProcess(message: AWS.Message): Promise<void> {
+    const { uploadId } = JSON.parse(message.Body);
 
     try {
-      console.log(data);
+      console.log(uploadId);
 
       const uploadDir = path.resolve(__dirname, '../../tmp');
-      const filePath = path.join(uploadDir, `file-${data.uploadId}.csv`);
+      const filePath = path.join(uploadDir, `file-${uploadId}.csv`);
 
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
-
-      chanel.ack(originalMsg);
+      //await fs.promises.writeFile(filePath, JSON.stringify(fileBuffer, null, 2));
     } catch (error) {
       console.error(error);
-      chanel.nack(originalMsg);
     }
   }
 }

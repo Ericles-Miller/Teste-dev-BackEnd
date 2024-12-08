@@ -3,27 +3,27 @@ import { createReadStream } from 'fs';
 import * as csv from 'csv-parser';
 import { v4 as uuid } from 'uuid';
 import { CreateUserDto } from '../user/dto/create-user.dto';
-import { ReadFileDto } from '../rabbit-mq/Dtos/read-file.dto';
-import { RabbitMqService } from '../rabbit-mq/rabbit-mq.service';
 import { RedisService } from '../redis/redis.service';
 import { EStatus } from '../redis/status.enum';
+import { AwsService } from '../aws/aws.service';
 
 @Injectable()
 export class ManagerFileService {
   constructor(
-    private readonly rabbitMqService: RabbitMqService,
     private readonly redisService: RedisService,
+    private readonly awsService: AwsService,
   ) {}
 
   async uploadFile(file: any): Promise<string> {
     try {
       const uploadId = uuid();
 
-      this.rabbitMqService.instance.emit('file-upload-queue', {
+      this.awsService.sendMessage(process.env.AWS_QUEUE_URL, {
         uploadId,
-        fileName: file.originalname,
-        fileBuffer: file.buffer.toString('base64'),
+        //fileName: file.originalname,
+        //fileBuffer: file.buffer.toString('base64'),
       });
+      console.log('aaaa');
 
       this.redisService.instance.emit('set-status', EStatus.PROCESS);
 
@@ -33,7 +33,7 @@ export class ManagerFileService {
     }
   }
 
-  async processFile({ filePath, jobId }: ReadFileDto): Promise<void> {
+  async processFile(filePath: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const fileStream = createReadStream(filePath);
       fileStream
@@ -58,7 +58,12 @@ export class ManagerFileService {
         )
         .on('data', async (row: CreateUserDto) => {
           try {
-            this.rabbitMqService.instance.emit('process-csv-row', { row });
+            this.awsService.sendMessage(process.env.QUEUE, {
+              id: uuid(),
+              body: {
+                row,
+              },
+            });
             this.redisService.instance.emit('set-status', EStatus.PROCESS);
           } catch (error) {
             console.error('Erro ao processar linha:', row, error);
