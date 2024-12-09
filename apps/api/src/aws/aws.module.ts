@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AwsService } from './aws.service';
-import { AwsController } from './aws.controller';
 import { SqsModule } from '@ssut/nestjs-sqs';
 import { SQSClient } from '@aws-sdk/client-sqs';
 
@@ -16,7 +15,7 @@ import { SQSClient } from '@aws-sdk/client-sqs';
       ],
     }),
   ],
-  controllers: [AwsController],
+  controllers: [],
   providers: [
     AwsService,
     {
