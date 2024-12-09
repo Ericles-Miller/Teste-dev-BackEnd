@@ -1,13 +1,13 @@
-import { Message } from '@aws-sdk/client-sqs';
 import { Injectable } from '@nestjs/common';
 import { SqsMessageHandler } from '@ssut/nestjs-sqs';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as AWS from '@aws-sdk/client-sqs';
+import { config } from './config';
 
 @Injectable()
 export class RabbitMqProcessService {
-  @SqsMessageHandler('MyQueue', false)
+  @SqsMessageHandler(config.queue, false)
   async fileProcess(message: AWS.Message): Promise<void> {
     const { uploadId } = JSON.parse(message.Body);
 

@@ -23,7 +23,6 @@ export class ManagerFileService {
         //fileName: file.originalname,
         //fileBuffer: file.buffer.toString('base64'),
       });
-      console.log('aaaa');
 
       this.redisService.instance.emit('set-status', EStatus.PROCESS);
 
