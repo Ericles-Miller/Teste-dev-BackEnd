@@ -8,7 +8,9 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
-    "start": "nest start",
+    "start:challenge": "node dist/challenge-flow/src/main.js",
+    "start:redis": "node dist/redis/src/main.js",
+    "start:rabbit": "node dist/rabbit-mq/src/main.js",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/api/main",
