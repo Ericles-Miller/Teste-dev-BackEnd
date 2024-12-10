@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15.3-alpine
-    container_name: postgresChallengeFlow
+    container_name: postgres
     restart: always
     environment:
       POSTGRES_PASSWORD: mysecretpassword
@@ -14,19 +14,19 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
   
   rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
+    image: 'rabbitmq:3.8-management-alpine'
+    container_name: nest_msg_rabbitmq
     ports:
-      - "5672:5672" # Porta usada pelos clientes e integradores
-      - "15672:15672" # Porta da interface de administração do RabbitMQ
-    environment:
-      RABBITMQ_DEFAULT_USER: admin # Usuário padrão
-      RABBITMQ_DEFAULT_PASS: admin # Senha padrão
+      - '15672:15672'
+      - '5672:5672'
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-  
+      - rabbitmq_data:/var/lib/rabbitmq/mnesia
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+
   redis:
-    container_name: redis
+    container_name: redis1
     image: redis:7.0
     ports:
       - "6379:6379"
@@ -35,5 +35,12 @@ services:
       
 volumes:
   pgdata:
+    driver: local
   rabbitmq_data:
+    driver: local
   redis-data:
+    driver: local
+
+networks:
+  default:
+    name: nest_msg_network
