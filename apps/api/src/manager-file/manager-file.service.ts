@@ -5,6 +5,9 @@ import { v4 as uuid } from 'uuid';
 import { RedisService } from '../redis/redis.service';
 import { EStatus } from '../redis/status.enum';
 import { AwsService } from '../aws/aws.service';
+import { CreateUserDto } from '../user/dto/create-user.dto';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ManagerFileService {
@@ -17,11 +20,14 @@ export class ManagerFileService {
     try {
       const uploadId = uuid();
 
-      this.awsService.sendMessage(process.env.AWS_QUEUE_URL, {
-        uploadId,
-        //fileName: file.originalname,
-        //fileBuffer: file.buffer.toString('base64'),
-      });
+      const uploadDir = path.resolve(__dirname, '../../tmp');
+      const filePath = path.join(uploadDir, `file-${uploadId}.csv`);
+
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      await fs.promises.writeFile(filePath, JSON.stringify(file.buffer.toString('base64'), null, 2));
 
       this.redisService.instance.emit('set-status', EStatus.PROCESS);
 
@@ -31,51 +37,49 @@ export class ManagerFileService {
     }
   }
 
-  // async processFile(filePath: string): Promise<void> {
-  //   return new Promise<void>((resolve, reject) => {
-  //     const fileStream = createReadStream(filePath);
-  //     fileStream
-  //       .pipe(
-  //         csv({
-  //           headers: [
-  //             'id',
-  //             'gender',
-  //             'nameSet',
-  //             'title',
-  //             'givName',
-  //             'surName',
-  //             'streetAddress',
-  //             'city',
-  //             'emailAddress',
-  //             'tropicalZodiac',
-  //             'occupation',
-  //             'vehicle',
-  //             'countryFull',
-  //           ],
-  //         }),
-  //       )
-  //       .on('data', async (row: CreateUserDto) => {
-  //         try {
-  //           this.awsService.sendMessage(process.env.QUEUE, {
-  //             id: uuid(),
-  //             body: {
-  //               row,
-  //             },
-  //           });
-  //           this.redisService.instance.emit('set-status', EStatus.PROCESS);
-  //         } catch (error) {
-  //           console.error('Erro ao processar linha:', row, error);
-  //           this.redisService.instance.emit('set-status', EStatus.ERROR);
-  //         }
-  //       })
-  //       .on('end', () => {
-  //         this.redisService.instance.emit('set-status', EStatus.COMPLETED);
-  //         resolve();
-  //       })
-  //       .on('error', (error) => {
-  //         this.redisService.instance.emit('set-status', EStatus.ERROR);
-  //         reject(error);
-  //       });
-  //   });
-  // }
+  async processFile(filePath: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const fileStream = createReadStream(filePath);
+      fileStream
+        .pipe(
+          csv({
+            headers: [
+              'id',
+              'gender',
+              'nameSet',
+              'title',
+              'givName',
+              'surName',
+              'streetAddress',
+              'city',
+              'emailAddress',
+              'tropicalZodiac',
+              'occupation',
+              'vehicle',
+              'countryFull',
+            ],
+          }),
+        )
+        .on('data', async (row: CreateUserDto) => {
+          try {
+            this.awsService.sendMessage(process.env.QUEUE, {
+              id: uuid(),
+              row,
+            });
+            this.redisService.instance.emit('set-status', EStatus.PROCESS);
+          } catch (error) {
+            console.error('Erro ao processar linha:', row, error);
+            this.redisService.instance.emit('set-status', EStatus.ERROR);
+          }
+        })
+        .on('end', () => {
+          this.redisService.instance.emit('set-status', EStatus.COMPLETED);
+          resolve();
+        })
+        .on('error', (error) => {
+          this.redisService.instance.emit('set-status', EStatus.ERROR);
+          reject(error);
+        });
+    });
+  }
 }

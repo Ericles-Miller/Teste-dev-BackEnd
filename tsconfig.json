@@ -8,7 +8,7 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2021",
     "sourceMap": true,
-    "outDir": "dist",
+    "outDir": "dist/apps",
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
@@ -19,5 +19,7 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {},
     
-  }
+  },
+  "include": ["apps/**/*.ts"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }
