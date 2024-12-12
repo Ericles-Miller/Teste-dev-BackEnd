@@ -8,6 +8,7 @@ import { AwsService } from '../aws/aws.service';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { config } from 'apps/rabbit-mq-process/src/config';
 
 @Injectable()
 export class ManagerFileService {
@@ -27,9 +28,17 @@ export class ManagerFileService {
         fs.mkdirSync(uploadDir, { recursive: true });
       }
 
-      await fs.promises.writeFile(filePath, JSON.stringify(file.buffer.toString('base64'), null, 2));
+      await fs.promises.writeFile(filePath, file.buffer);
 
       this.redisService.instance.emit('set-status', EStatus.PROCESS);
+
+      this.processFile(filePath)
+        .then(() => {
+          console.log(`File processing completed for: ${filePath}`);
+        })
+        .catch((error) => {
+          console.error('Error processing file:', error);
+        });
 
       return uploadId;
     } catch {
@@ -62,7 +71,7 @@ export class ManagerFileService {
         )
         .on('data', async (row: CreateUserDto) => {
           try {
-            this.awsService.sendMessage(process.env.QUEUE, {
+            this.awsService.sendMessage(config.queueUrl, {
               id: uuid(),
               row,
             });
