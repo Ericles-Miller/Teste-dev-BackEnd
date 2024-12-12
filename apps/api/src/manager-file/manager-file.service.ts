@@ -62,7 +62,7 @@ export class ManagerFileService {
         )
         .on('data', async (row: CreateUserDto) => {
           try {
-            this.awsService.sendMessage(process.env.QUEUE, {
+            this.awsService.sendMessage(process.env.AWS_QUEUE_URL, {
               id: uuid(),
               row,
             });
