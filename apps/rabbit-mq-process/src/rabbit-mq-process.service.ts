@@ -7,10 +7,10 @@ import { config } from './config';
 export class RabbitMqProcessService {
   @SqsMessageHandler(config.queue, false)
   async fileProcess(message: AWS.Message): Promise<void> {
-    const { uploadId, row } = JSON.parse(message.Body);
+    const { uploadId, batch } = JSON.parse(message.Body);
 
     try {
-      console.log(uploadId, '---', row);
+      console.log(uploadId, '---', batch);
     } catch (error) {
       console.error(error);
     }

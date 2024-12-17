@@ -48,6 +48,9 @@ export class ManagerFileService {
 
   async processFile(filePath: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
+      const batchSize = 100;
+      let batch = [];
+
       const fileStream = createReadStream(filePath);
       fileStream
         .pipe(
@@ -70,18 +73,30 @@ export class ManagerFileService {
           }),
         )
         .on('data', async (row: CreateUserDto) => {
-          try {
-            this.awsService.sendMessage(config.queueUrl, {
-              id: uuid(),
-              row,
-            });
-            this.redisService.instance.emit('set-status', EStatus.PROCESS);
-          } catch (error) {
-            console.error('Erro ao processar linha:', row, error);
-            this.redisService.instance.emit('set-status', EStatus.ERROR);
+          batch.push({ id: uuid(), row });
+
+          if (batch.length >= batchSize) {
+            try {
+              await this.sendBatchMessages(batch);
+              batch = [];
+
+              this.redisService.instance.emit('set-status', EStatus.PROCESS);
+            } catch (error) {
+              console.error('Erro ao processar linha:', row, error);
+              this.redisService.instance.emit('set-status', EStatus.ERROR);
+            }
           }
         })
-        .on('end', () => {
+        .on('end', async () => {
+          if (batch.length > 0) {
+            try {
+              await this.sendBatchMessages(batch);
+              this.redisService.instance.emit('set-status', EStatus.PROCESS);
+            } catch (error) {
+              console.error('Erro ao processar batch final:', batch, error);
+              this.redisService.instance.emit('set-status', EStatus.ERROR);
+            }
+          }
           this.redisService.instance.emit('set-status', EStatus.COMPLETED);
           resolve();
         })
@@ -89,6 +104,13 @@ export class ManagerFileService {
           this.redisService.instance.emit('set-status', EStatus.ERROR);
           reject(error);
         });
+    });
+  }
+
+  private async sendBatchMessages(batch: any[]): Promise<void> {
+    await this.awsService.sendMessage(config.queueUrl, {
+      id: uuid(),
+      batch,
     });
   }
 }
