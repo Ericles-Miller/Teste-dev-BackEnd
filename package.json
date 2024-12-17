@@ -9,7 +9,7 @@
     "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start:dev": "nest start --watch",
-    "start:dev:api": "nest start --watch apps/api", 
+    "start:dev:api": "nest start --watch apps/api",
     "start:dev:rabbit": "nest start --watch apps/rabbit-mq-process",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/api/main",
@@ -23,6 +23,7 @@
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.699.0",
     "@aws-sdk/lib-dynamodb": "^3.705.0",
+    "@aws-sdk/node-http-handler": "^3.374.0",
     "@nestjs/class-validator": "^0.13.4",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",

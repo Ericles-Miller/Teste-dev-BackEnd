@@ -24,7 +24,7 @@ if (process.env.IS_CHILD) {
       env: { ...process.env, IS_CHILD: 'true', WORKER_ID: i.toString() },
     });
 
-    worker.on('exit', (code, signal) => {
+    worker.on('exit', () => {
       console.log(`Worker process ${worker.pid} exited. Restarting...`);
       fork(__filename, [], {
         env: { ...process.env, IS_CHILD: 'true', WORKER_ID: i.toString() },
