@@ -15,6 +15,8 @@ export class RabbitMqProcessService {
 
   private async processWithRetry(batch: CreateUserDto[], retryCount = 0): Promise<void> {
     try {
+      console.log(batch[0], 'aaaaaaaaa');
+
       await this.userService.createMany(batch);
     } catch (error) {
       if (retryCount >= this.MAX_RETRIES) throw error;
@@ -28,14 +30,14 @@ export class RabbitMqProcessService {
   @SqsMessageHandler(config.queue, false)
   async fileProcess(message: AWS.Message): Promise<void> {
     const { uploadId, batch } = JSON.parse(message.Body);
+    console.log(batch);
 
     try {
-      for (let i = 0; i < batch.length; i += this.BATCH_SIZE) {
-        const chunk = batch.slice(i, i + this.BATCH_SIZE);
-        await this.processWithRetry(chunk);
-      }
-
-      console.log(`Batch ${uploadId} processed successfully`);
+      // for (let i = 0; i < batch.length; i += this.BATCH_SIZE) {
+      //   const chunk = batch.slice(i, i + this.BATCH_SIZE);
+      //   //await this.processWithRetry(chunk);
+      // }
+      //console.log(`Batch ${uploadId} processed successfully`);
     } catch (error) {
       console.error(`Failed to process batch ${uploadId}:`, error);
       throw error;

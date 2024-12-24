@@ -9,6 +9,7 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { config } from 'apps/rabbit-mq-process/src/config';
+import { Transform, Writable } from 'stream';
 
 @Injectable()
 export class ManagerFileService {
@@ -47,83 +48,81 @@ export class ManagerFileService {
   }
 
   async processFile(filePath: string): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      const batchSize = 10;
-      let batch = [];
-      let processedCount = 0;
+    const batch: CreateUserDto[] = [];
+    let processedCount = 0;
+    const self = this;
 
-      const fileStream = createReadStream(filePath, {
-        highWaterMark: 64 * 1024, // 64KB buffer
-      });
+    const fileStream = createReadStream(filePath);
+    const transformToObject = csv({
+      separator: ';',
+      skipComments: true,
+      skipLines: 1,
+      headers: [
+        'id',
+        'gender',
+        'nameSet',
+        'title',
+        'givName',
+        'surName',
+        'streetAddress',
+        'city',
+        'emailAddress',
+        'tropicalZodiac',
+        'occupation',
+        'vehicle',
+        'countryFull',
+      ],
+    });
+    const transformToString = new Transform({
+      objectMode: true,
+      transform(chunk, encoding, callback) {
+        callback(null, JSON.stringify(chunk));
+      },
+    });
 
+
+    const writableStreamFile = new Writable({
+      objectMode: true,
+
+      async write(chunk, encoding, next) {
+        const rowData = JSON.parse(chunk) as CreateUserDto;
+        batch.push(rowData);
+        processedCount++;
+
+        if (batch.length >= 1000) {
+          fileStream.pause();
+          await self.sendBatchMessages([...batch]);
+
+          self.redisService.instance.emit('set-status', EStatus.PROCESS);
+
+          console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
+          batch.length = 0;
+          fileStream.resume();
+        }
+
+        next();
+      },
+    });
+
+    return new Promise((resolve, reject) => {
       fileStream
-        .pipe(
-          csv({
-            skipComments: true,
-            skipLines: 1,
-            headers: [
-              'id',
-              'gender',
-              'nameSet',
-              'title',
-              'givName',
-              'surName',
-              'streetAddress',
-              'city',
-              'emailAddress',
-              'tropicalZodiac',
-              'occupation',
-              'vehicle',
-              'countryFull',
-            ],
-          }),
-        )
-        .on('data', async (row: CreateUserDto) => {
-          batch.push({ id: uuid(), ...row });
-
-          if (batch.length >= batchSize) {
-            fileStream.pause();
-
-            try {
-              await this.sendBatchMessages([...batch]);
-              processedCount += batch.length;
-
-              console.log(`Processados: ${processedCount} registros`);
-
-              this.redisService.instance.emit('set-status', EStatus.PROCESS);
-              batch = [];
-            } catch (error) {
-              console.error('Erro ao processar batch:', error);
-
-              this.redisService.instance.emit('set-status', EStatus.ERROR);
-            } finally {
-              fileStream.resume();
-            }
-          }
-        })
-        .on('end', async () => {
+        .pipe(transformToObject)
+        .pipe(transformToString)
+        .pipe(writableStreamFile)
+        .on('finish', async () => {
           if (batch.length > 0) {
-            try {
-              await this.sendBatchMessages(batch);
-              this.redisService.instance.emit('set-status', EStatus.PROCESS);
-            } catch (error) {
-              console.error('Erro ao processar batch final:', error);
-              this.redisService.instance.emit('set-status', EStatus.ERROR);
-              reject(error);
-              return;
-            }
+            await this.sendBatchMessages([...batch]);
+            console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
           }
-          this.redisService.instance.emit('set-status', EStatus.COMPLETED);
+
+          this.redisService.instance.emit('set-status', EStatus.PROCESS);
           resolve();
         })
-        .on('error', (error) => {
-          this.redisService.instance.emit('set-status', EStatus.ERROR);
-          reject(error);
-        });
+        .on('error', reject);
     });
   }
 
-  private async sendBatchMessages(batch: any[]): Promise<void> {
+  private async sendBatchMessages(batch: CreateUserDto[]): Promise<void> {
     await this.awsService.sendMessage(config.queueUrl, {
       id: uuid(),
       batch,

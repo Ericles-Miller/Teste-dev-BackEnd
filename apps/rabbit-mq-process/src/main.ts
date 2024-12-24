@@ -1,94 +1,81 @@
 import { NestFactory } from '@nestjs/core';
 import { RabbitMqProcessModule } from './rabbit-mq-process.module';
-import { fork, ChildProcess } from 'child_process';
+import { fork } from 'child_process';
 import * as os from 'os';
+import * as net from 'net';
 
-const MIN_WORKERS = Math.max(4, os.cpus().length);
-const MAX_WORKERS = os.cpus().length * 2;
-const BATCH_SIZE = 1000;
-const workers = new Map<number, ChildProcess>();
+const numCPUs = os.cpus().length;
+const BASE_PORT = 3333;
+const MAX_PORT = 3400;
 
-async function bootstrap() {
-  const app = await NestFactory.create(RabbitMqProcessModule, {
-    logger: ['error', 'warn'],
+async function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    server.listen(port, () => {
+      server.close(() => resolve(true));
+    });
+    server.on('error', () => resolve(false));
   });
-
-  process.setMaxListeners(MAX_WORKERS);
-
-  process.on('message', async (msg) => {
-    if (msg === 'shutdown') {
-      await app.close();
-      process.exit(0);
-    }
-  });
-
-  const port = 3333 + (process.env.WORKER_ID ? parseInt(process.env.WORKER_ID) : 0);
-  await app.listen(port);
 }
 
-function createWorker(workerId: number): ChildProcess {
-  const worker = fork(__filename, [], {
-    env: {
-      ...process.env,
-      IS_CHILD: 'true',
-      WORKER_ID: workerId.toString(),
-      NODE_OPTIONS: '--max-old-space-size=4096', // Aumenta heap
-    },
-  });
-
-  // Comunicação otimizada
-  worker.on('message', (message) => {
-    if (message === 'ready') {
-      worker.send({ type: 'start', batchSize: BATCH_SIZE });
+async function findAvailablePort(startPort: number): Promise<number> {
+  let port = startPort;
+  while (port <= MAX_PORT) {
+    if (await isPortAvailable(port)) {
+      return port;
     }
-  });
+    port++;
+  }
+  throw new Error('Nenhuma porta disponível');
+}
 
-  worker.on('exit', (code) => {
-    workers.delete(workerId);
-    if (code !== 0) {
-      const newWorker = createWorker(workerId);
-      workers.set(workerId, newWorker);
-    }
-  });
+async function bootstrap() {
+  const app = await NestFactory.create(RabbitMqProcessModule);
+  const workerId = process.env.WORKER_ID ? parseInt(process.env.WORKER_ID) : 0;
 
-  return worker;
+  try {
+    const port = await findAvailablePort(BASE_PORT + workerId);
+    await app.listen(port);
+    console.log(`Worker ${process.env.WORKER_ID} iniciado na porta ${port}`);
+  } catch (error) {
+    console.error(`Erro ao iniciar worker ${workerId}:`, error);
+    process.exit(1);
+  }
 }
 
 if (process.env.IS_CHILD) {
   bootstrap();
 } else {
-  // Pool dinâmico de workers
-  const startWorkers = () => {
-    const targetWorkers = Math.min(MAX_WORKERS, Math.max(MIN_WORKERS, Math.ceil(os.loadavg()[0] * 2)));
+  console.log(`Processo principal iniciado: ${process.pid}`);
+  const workers = new Map();
+  const activeWorkers = new Set();
 
-    while (workers.size < targetWorkers) {
-      const workerId = workers.size;
-      const worker = createWorker(workerId);
-      workers.set(workerId, worker);
-    }
+  const startWorker = async (i: number) => {
+    if (activeWorkers.has(i)) return;
+
+    const worker = fork(__filename, [], {
+      env: { ...process.env, IS_CHILD: 'true', WORKER_ID: i.toString() },
+    });
+
+    workers.set(i, worker);
+    activeWorkers.add(i);
+
+    worker.on('exit', (code) => {
+      console.log(`Worker ${i} finalizado com código ${code}`);
+      activeWorkers.delete(i);
+
+      if (code !== 0) {
+        setTimeout(() => startWorker(i), 1000);
+      }
+    });
   };
 
-  // Monitoramento e ajuste automático
-  setInterval(() => {
-    const load = os.loadavg()[0];
-    if (load < os.cpus().length * 0.8) {
-      startWorkers();
-    }
-  }, 5000);
+  for (let i = 0; i < numCPUs; i++) {
+    startWorker(i);
+  }
 
-  // Inicialização inicial
-  startWorkers();
-
-  // Shutdown otimizado
   process.on('SIGTERM', () => {
-    const promises = Array.from(workers.values()).map(
-      (worker) =>
-        new Promise((resolve) => {
-          worker.send('shutdown');
-          worker.on('exit', resolve);
-        }),
-    );
-
-    Promise.all(promises).then(() => process.exit(0));
+    workers.forEach((worker) => worker.kill());
+    process.exit(0);
   });
 }

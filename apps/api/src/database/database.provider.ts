@@ -11,7 +11,7 @@ export const dataSourceOptions: DataSourceOptions = {
   database: process.env.DATABASE_NAME,
   port: Number(process.env.DATABASE_PORT),
   synchronize: false,
-  logging: true,
+  logging: false,
   entities: [User],
   migrations: [__dirname + 'migrations/*{.ts,.js}'],
   migrationsRun: true,
