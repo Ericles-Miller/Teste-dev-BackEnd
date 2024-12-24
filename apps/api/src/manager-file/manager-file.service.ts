@@ -48,10 +48,14 @@ export class ManagerFileService {
 
   async processFile(filePath: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      const batchSize = 100;
+      const batchSize = 10;
       let batch = [];
+      let processedCount = 0;
 
-      const fileStream = createReadStream(filePath);
+      const fileStream = createReadStream(filePath, {
+        highWaterMark: 64 * 1024, // 64KB buffer
+      });
+
       fileStream
         .pipe(
           csv({
@@ -73,17 +77,22 @@ export class ManagerFileService {
           }),
         )
         .on('data', async (row: CreateUserDto) => {
-          batch.push({ id: uuid(), row });
+          batch.push({ id: uuid(), ...row });
 
           if (batch.length >= batchSize) {
-            try {
-              await this.sendBatchMessages(batch);
-              batch = [];
+            fileStream.pause();
 
+            try {
+              await this.sendBatchMessages([...batch]);
+              processedCount += batch.length;
+              console.log(`Processados: ${processedCount} registros`);
               this.redisService.instance.emit('set-status', EStatus.PROCESS);
+              batch = [];
             } catch (error) {
-              console.error('Erro ao processar linha:', row, error);
+              console.error('Erro ao processar batch:', error);
               this.redisService.instance.emit('set-status', EStatus.ERROR);
+            } finally {
+              fileStream.resume();
             }
           }
         })
@@ -93,8 +102,10 @@ export class ManagerFileService {
               await this.sendBatchMessages(batch);
               this.redisService.instance.emit('set-status', EStatus.PROCESS);
             } catch (error) {
-              console.error('Erro ao processar batch final:', batch, error);
+              console.error('Erro ao processar batch final:', error);
               this.redisService.instance.emit('set-status', EStatus.ERROR);
+              reject(error);
+              return;
             }
           }
           this.redisService.instance.emit('set-status', EStatus.COMPLETED);
