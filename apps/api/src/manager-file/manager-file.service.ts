@@ -59,6 +59,8 @@ export class ManagerFileService {
       fileStream
         .pipe(
           csv({
+            skipComments: true,
+            skipLines: 1,
             headers: [
               'id',
               'gender',
@@ -85,11 +87,14 @@ export class ManagerFileService {
             try {
               await this.sendBatchMessages([...batch]);
               processedCount += batch.length;
+
               console.log(`Processados: ${processedCount} registros`);
+
               this.redisService.instance.emit('set-status', EStatus.PROCESS);
               batch = [];
             } catch (error) {
               console.error('Erro ao processar batch:', error);
+
               this.redisService.instance.emit('set-status', EStatus.ERROR);
             } finally {
               fileStream.resume();
