@@ -84,7 +84,7 @@ export class ManagerFileService {
         batch.push(rowData);
         processedCount++;
 
-        if (batch.length >= 1000) {
+        if (batch.length >= 1500) {
           fileStream.pause();
           await self.sendBatchMessages(batch);
 
