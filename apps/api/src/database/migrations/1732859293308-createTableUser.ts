@@ -7,58 +7,58 @@ export class CreateTableUser1732859293308 implements MigrationInterface {
         name: 'users',
         columns: [
           {
-            name: 'Id',
+            name: 'id',
             type: 'int',
             isPrimary: true,
             isGenerated: true,
             generationStrategy: 'increment',
           },
           {
-            name: 'Gender',
+            name: 'gender',
             type: 'varchar',
           },
           {
-            name: 'NameSet',
+            name: 'nameSet',
             type: 'varchar',
           },
           {
-            name: 'Title',
+            name: 'title',
             type: 'varchar',
           },
           {
-            name: 'GivName',
+            name: 'givName',
             type: 'varchar',
           },
           {
-            name: 'SurName',
+            name: 'surName',
             type: 'varchar',
           },
           {
-            name: 'StreetAddress',
+            name: 'streetAddress',
             type: 'varchar',
           },
           {
-            name: 'City',
+            name: 'city',
             type: 'varchar',
           },
           {
-            name: 'EmailAddress',
+            name: 'emailAddress',
             type: 'varchar',
           },
           {
-            name: 'TropicalZodiac',
+            name: 'tropicalZodiac',
             type: 'varchar',
           },
           {
-            name: 'Occupation',
+            name: 'occupation',
             type: 'varchar',
           },
           {
-            name: 'Vehicle',
+            name: 'vehicle',
             type: 'varchar',
           },
           {
-            name: 'CountryFull',
+            name: 'countryFull',
             type: 'varchar',
           },
         ],
