@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-this-alias */
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createReadStream } from 'fs';
 import * as csv from 'csv-parser';
@@ -5,11 +6,10 @@ import { v4 as uuid } from 'uuid';
 import { RedisService } from '../redis/redis.service';
 import { EStatus } from '../redis/status.enum';
 import { AwsService } from '../aws/aws.service';
-import { CreateUserDto } from '../user/dto/create-user.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { config } from 'apps/rabbit-mq-process/src/config';
-import { Transform, Writable } from 'stream';
+import { Writable } from 'stream';
 
 @Injectable()
 export class ManagerFileService {
@@ -48,14 +48,16 @@ export class ManagerFileService {
   }
 
   async processFile(filePath: string): Promise<void> {
-    const batch: CreateUserDto[] = [];
+    const batch: string[] = [];
     let processedCount = 0;
     const self = this;
 
-    const fileStream = createReadStream(filePath);
+    const fileStream = createReadStream(filePath, { highWaterMark: 128 * 1024 });
     const transformToObject = csv({
       separator: ';',
       skipComments: true,
+      quote: '"',
+      escape: '"',
       skipLines: 1,
       headers: [
         'id',
@@ -73,25 +75,18 @@ export class ManagerFileService {
         'countryFull',
       ],
     });
-    const transformToString = new Transform({
-      objectMode: true,
-      transform(chunk, encoding, callback) {
-        callback(null, JSON.stringify(chunk));
-      },
-    });
-
 
     const writableStreamFile = new Writable({
       objectMode: true,
 
       async write(chunk, encoding, next) {
-        const rowData = JSON.parse(chunk) as CreateUserDto;
+        const rowData = Object.values(chunk).join(',');
         batch.push(rowData);
         processedCount++;
 
         if (batch.length >= 1000) {
           fileStream.pause();
-          await self.sendBatchMessages([...batch]);
+          await self.sendBatchMessages(batch);
 
           self.redisService.instance.emit('set-status', EStatus.PROCESS);
 
@@ -107,11 +102,10 @@ export class ManagerFileService {
     return new Promise((resolve, reject) => {
       fileStream
         .pipe(transformToObject)
-        .pipe(transformToString)
         .pipe(writableStreamFile)
         .on('finish', async () => {
           if (batch.length > 0) {
-            await this.sendBatchMessages([...batch]);
+            await self.sendBatchMessages(batch);
             console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
           }
 
@@ -122,9 +116,8 @@ export class ManagerFileService {
     });
   }
 
-  private async sendBatchMessages(batch: CreateUserDto[]): Promise<void> {
+  private async sendBatchMessages(batch: string[]): Promise<void> {
     await this.awsService.sendMessage(config.queueUrl, {
-      id: uuid(),
       batch,
     });
   }
