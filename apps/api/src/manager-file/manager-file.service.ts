@@ -1,21 +1,27 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { createReadStream } from 'fs';
 import * as csv from 'csv-parser';
 import { v4 as uuid } from 'uuid';
 import { RedisService } from '../redis/redis.service';
-import { EStatus } from '../redis/status.enum';
+import { EStatus } from '../../../redis-process/status.enum';
 import { AwsService } from '../aws/aws.service';
 import * as fs from 'fs';
 import * as path from 'path';
-import { config } from 'apps/rabbit-mq-process/src/config';
+import { config } from 'apps/sqs-process/src/config';
 import { Writable } from 'stream';
+import { StatusProcessDto } from 'apps/redis-process/dtos/status-process.dto';
+import { RedisProcessService } from 'apps/redis-process/src/redis-process.service';
+import { timeout } from 'rxjs';
 
 @Injectable()
 export class ManagerFileService {
   constructor(
     private readonly redisService: RedisService,
     private readonly awsService: AwsService,
+
+    @Inject(forwardRef(() => RedisProcessService))
+    private readonly redisProcessService: RedisProcessService,
   ) {}
 
   async uploadFile(file: any): Promise<string> {
@@ -31,7 +37,12 @@ export class ManagerFileService {
 
       await fs.promises.writeFile(filePath, file.buffer);
 
-      this.redisService.instance.emit('set-status', EStatus.PROCESS);
+      this.redisService.instance
+        .emit<StatusProcessDto>('set-status', {
+          status: EStatus.PROCESS,
+          id: uploadId,
+        })
+        .pipe(timeout(5000));
 
       this.processFile(filePath)
         .then(() => {
@@ -120,5 +131,9 @@ export class ManagerFileService {
     await this.awsService.sendMessage(config.queueUrl, {
       batch,
     });
+  }
+
+  async checkStatusProcessFile(key: string): Promise<StatusProcessDto> {
+    return await this.redisProcessService.checkStatusProcessFile(key);
   }
 }

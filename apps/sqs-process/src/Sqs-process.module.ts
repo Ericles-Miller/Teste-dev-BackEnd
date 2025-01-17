@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RabbitMqProcessService } from './rabbit-mq-process.service';
+import { SQSProcessService } from './Sqs-process.service';
 import { SqsModule } from '@ssut/nestjs-sqs';
 import { config } from './config';
 import { UserModule } from 'apps/api/src/user/user.module';
@@ -22,8 +22,8 @@ import { RedisModule } from 'apps/api/src/redis/redis.module';
     UserModule,
     RedisModule,
   ],
-  providers: [RabbitMqProcessService],
+  providers: [SQSProcessService],
   exports: [],
   controllers: [],
 })
-export class RabbitMqProcessModule {}
+export class SQSProcessModule {}

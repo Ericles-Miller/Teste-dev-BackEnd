@@ -23,6 +23,7 @@
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.699.0",
     "@aws-sdk/lib-dynamodb": "^3.705.0",
+    "@nestjs-modules/ioredis": "^2.0.2",
     "@nestjs/class-validator": "^0.13.4",
     "@nestjs/common": "^10.0.0",
     "@nestjs/core": "^10.0.0",

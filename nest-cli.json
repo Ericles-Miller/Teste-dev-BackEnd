@@ -18,13 +18,22 @@
         "tsConfigPath": "apps/api/tsconfig.app.json"
       }
     },
-    "rabbit-mq-process": {
+    "sqs-process": {
       "type": "application",
-      "root": "apps/rabbit-mq-process",
-      "entryFile": "main",  
-      "sourceRoot": "apps/rabbit-mq-process/src",
+      "root": "apps/sqs-process",
+      "entryFile": "main",
+      "sourceRoot": "apps/sqs-process/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/rabbit-mq-process/tsconfig.app.json"
+        "tsConfigPath": "apps/sqs-process/tsconfig.app.json"
+      }
+    },
+    "redis-process": {
+      "type": "application",
+      "root": "apps/redis-process",
+      "entryFile": "main",
+      "sourceRoot": "apps/redis-process/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/redis-process/tsconfig.app.json"
       }
     }
   }

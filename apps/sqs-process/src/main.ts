@@ -1,8 +1,8 @@
 import { NestFactory } from '@nestjs/core';
-import { RabbitMqProcessModule } from './rabbit-mq-process.module';
 import { fork } from 'child_process';
 import * as os from 'os';
 import * as net from 'net';
+import { SQSProcessModule } from './Sqs-process.module';
 
 const numCPUs = os.cpus().length;
 const BASE_PORT = 3333;
@@ -30,7 +30,7 @@ async function findAvailablePort(startPort: number): Promise<number> {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(RabbitMqProcessModule);
+  const app = await NestFactory.create(SQSProcessModule);
   const workerId = process.env.WORKER_ID ? parseInt(process.env.WORKER_ID) : 0;
 
   try {

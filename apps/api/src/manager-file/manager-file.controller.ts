@@ -1,8 +1,9 @@
-import { Controller, Post, UseInterceptors, UploadedFile, Res } from '@nestjs/common';
+import { Controller, Post, UseInterceptors, UploadedFile, Res, Get, Param } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ManagerFileService } from './manager-file.service';
-import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConsumes, ApiParam, ApiTags } from '@nestjs/swagger';
 import { FileUploadDto } from './dto/file-upload.dto';
+import { StatusProcessDto } from 'apps/redis-process/dtos/status-process.dto';
 
 @Controller('Manager-file')
 @ApiTags('manager-files')
@@ -23,5 +24,11 @@ export class ManagerFileController {
       message: 'Arquivo recebido com sucesso. Processamento iniciado.',
       uploadId,
     });
+  }
+
+  @Get()
+  @ApiParam({ name: 'key', type: 'string' })
+  async getHello(@Param() key: string): Promise<StatusProcessDto> {
+    return await this.managerFileService.checkStatusProcessFile(key);
   }
 }

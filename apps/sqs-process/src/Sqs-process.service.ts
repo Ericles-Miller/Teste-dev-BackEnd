@@ -4,7 +4,7 @@ import * as AWS from '@aws-sdk/client-sqs';
 import { config } from './config';
 import { UserService } from 'apps/api/src/user/user.service';
 import { CreateUserDto } from 'apps/api/src/user/dto/create-user.dto';
-import { EStatus } from 'apps/api/src/redis/status.enum';
+import { EStatus } from 'apps/redis-process/status.enum';
 import { RedisService } from 'apps/api/src/redis/redis.service';
 
 interface ISqsMessageBody {
@@ -12,7 +12,7 @@ interface ISqsMessageBody {
 }
 
 @Injectable()
-export class RabbitMqProcessService {
+export class SQSProcessService {
   private readonly MAX_RETRIES = 3;
   private readonly BACKOFF_TIME = 1000;
 
