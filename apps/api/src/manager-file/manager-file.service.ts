@@ -116,6 +116,6 @@ export class ManagerFileService {
   }
 
   private async sendBatchMessages(batch: string[], id: string): Promise<void> {
-    await this.rabbitMqService.instance.emit('save-data', { batch, id });
+    await this.rabbitMqService.instance.emit('save-file', { batch, id });
   }
 }

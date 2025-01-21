@@ -9,10 +9,9 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         name: 'RABBIT-MQ-SERVICE',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://localhost:5672'],
+          urls: ['amqp://guest:guest@localhost:5672'],
           queue: 'file-process',
           queueOptions: {
-            noAck: false,
             durable: false,
           },
         },

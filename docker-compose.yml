@@ -16,17 +16,17 @@ services:
   rabbitmq:
     image: 'rabbitmq:3.8-management-alpine'
     container_name: nest_msg_rabbitmq
+    restart: always
     ports:
       - '15672:15672'
       - '5672:5672'
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq/mnesia
-    environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=admin
+    
 
   redis:
     container_name: redis1
+    restart: always
     image: redis:7.0
     ports:
       - "6379:6379"

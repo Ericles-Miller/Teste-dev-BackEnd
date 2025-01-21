@@ -17,7 +17,7 @@ import { RedisModule } from 'apps/api/src/redis/redis.module';
         name: 'RABBIT-MQ-PROCESS',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://localhost:5672'],
+          urls: ['amqp://guest:guest@localhost:5672'],
           queue: 'file-process',
           queueOptions: {
             durable: false,
