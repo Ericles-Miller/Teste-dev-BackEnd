@@ -21,10 +21,19 @@
     "rabbit-mq-process": {
       "type": "application",
       "root": "apps/rabbit-mq-process",
-      "entryFile": "main",  
+      "entryFile": "main",
       "sourceRoot": "apps/rabbit-mq-process/src",
       "compilerOptions": {
         "tsConfigPath": "apps/rabbit-mq-process/tsconfig.app.json"
+      }
+    },
+    "rabbit-process": {
+      "type": "application",
+      "root": "apps/rabbit-process",
+      "entryFile": "main",
+      "sourceRoot": "apps/rabbit-process/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/rabbit-process/tsconfig.app.json"
       }
     }
   }

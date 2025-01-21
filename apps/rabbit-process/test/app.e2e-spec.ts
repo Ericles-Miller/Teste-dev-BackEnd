@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { RabbitMqProcessModule } from './../src/rabbit-mq-process.module';
+import { RabbitProcessModule } from './../src/rabbit-process.module';
 
-describe('RabbitMqProcessController (e2e)', () => {
+describe('RabbitProcessController (e2e)', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [RabbitMqProcessModule],
+      imports: [RabbitProcessModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();

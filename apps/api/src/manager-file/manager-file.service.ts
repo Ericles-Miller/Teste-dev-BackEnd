@@ -5,17 +5,16 @@ import * as csv from 'csv-parser';
 import { v4 as uuid } from 'uuid';
 import { RedisService } from '../redis/redis.service';
 import { EStatus } from '../redis/status.enum';
-import { AwsService } from '../aws/aws.service';
 import * as fs from 'fs';
 import * as path from 'path';
-import { config } from 'apps/rabbit-mq-process/src/config';
 import { Writable } from 'stream';
+import { RabbitMqService } from '../rabbit-mq/rabbit-mq.service';
 
 @Injectable()
 export class ManagerFileService {
   constructor(
     private readonly redisService: RedisService,
-    private readonly awsService: AwsService,
+    private readonly rabbitMqService: RabbitMqService,
   ) {}
 
   async uploadFile(file: any): Promise<string> {
@@ -31,9 +30,9 @@ export class ManagerFileService {
 
       await fs.promises.writeFile(filePath, file.buffer);
 
-      this.redisService.instance.emit('set-status', EStatus.PROCESS);
+      this.redisService.instance.emit('set-status', { status: EStatus.PROCESS, id: uploadId });
 
-      this.processFile(filePath)
+      this.processFile(filePath, uploadId)
         .then(() => {
           console.log(`File processing completed for: ${filePath}`);
         })
@@ -47,7 +46,7 @@ export class ManagerFileService {
     }
   }
 
-  async processFile(filePath: string): Promise<void> {
+  async processFile(filePath: string, id: string): Promise<void> {
     const batch: string[] = [];
     let processedCount = 0;
     const self = this;
@@ -84,13 +83,13 @@ export class ManagerFileService {
         batch.push(rowData);
         processedCount++;
 
-        if (batch.length >= 1500) {
+        if (batch.length >= 1000) {
           fileStream.pause();
-          await self.sendBatchMessages(batch);
+          await self.sendBatchMessages(batch, id);
 
-          self.redisService.instance.emit('set-status', EStatus.PROCESS);
+          self.redisService.instance.emit('set-status', { status: EStatus.PROCESS, id });
 
-          console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
+          console.log(`Sent batch of ${batch.length} records. Total processed: ${processedCount}`);
           batch.length = 0;
           fileStream.resume();
         }
@@ -105,8 +104,8 @@ export class ManagerFileService {
         .pipe(writableStreamFile)
         .on('finish', async () => {
           if (batch.length > 0) {
-            await self.sendBatchMessages(batch);
-            console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
+            await self.sendBatchMessages(batch, id);
+            console.log(`Sent batch of ${batch.length} records. Total processed: ${processedCount}`);
           }
 
           this.redisService.instance.emit('set-status', EStatus.PROCESS);
@@ -116,9 +115,7 @@ export class ManagerFileService {
     });
   }
 
-  private async sendBatchMessages(batch: string[]): Promise<void> {
-    await this.awsService.sendMessage(config.queueUrl, {
-      batch,
-    });
+  private async sendBatchMessages(batch: string[], id: string): Promise<void> {
+    await this.rabbitMqService.instance.emit('save-data', { batch, id });
   }
 }
