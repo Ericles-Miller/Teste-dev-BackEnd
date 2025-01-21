@@ -75,7 +75,7 @@ export class SQSProcessService {
       await this.processWithRetry(dtos);
       this.redisService.instance.emit('set-status', EStatus.PROCESS);
     } catch (error) {
-      console.error('Erro ao processar batch:', error);
+      console.error('Error to process batch:', error);
       this.redisService.instance.emit('set-status', EStatus.ERROR);
       throw error;
     }

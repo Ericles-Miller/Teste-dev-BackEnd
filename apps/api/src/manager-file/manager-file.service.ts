@@ -101,7 +101,7 @@ export class ManagerFileService {
 
           self.redisService.instance.emit('set-status', { status: EStatus.PROCESS, id: uploadId });
 
-          console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
+          console.log(`Sent batch of ${batch.length} records. Total processed: ${processedCount}`);
           batch.length = 0;
           fileStream.resume();
         }
@@ -117,7 +117,7 @@ export class ManagerFileService {
         .on('finish', async () => {
           if (batch.length > 0) {
             await self.sendBatchMessages(batch);
-            console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
+            console.log(`Sent batch of ${batch.length} records. Total processed: ${processedCount}`);
           }
 
           this.redisService.instance.emit('set-status', { status: EStatus.PROCESS, id: uploadId });
