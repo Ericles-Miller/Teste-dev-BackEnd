@@ -15,6 +15,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT ?? 3334);
+  await app.listen(process.env.PORT ?? 3334, () => console.log('Api service is running!'));
 }
+
 bootstrap();

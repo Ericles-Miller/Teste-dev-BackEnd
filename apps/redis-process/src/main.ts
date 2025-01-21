@@ -12,6 +12,7 @@ async function bootstrap() {
   });
 
   app.init();
+  console.log('Redis microservice is listening...');
 }
 
 bootstrap();
