@@ -10,6 +10,8 @@ export class RedisProcessService {
   ) {}
 
   async checkStatusProcessFile(key: string): Promise<any> {
+    console.log(key);
+
     const status = await this.redisClient.getRequestPattern(key);
     return JSON.parse(status);
   }

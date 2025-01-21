@@ -26,9 +26,9 @@ export class ManagerFileController {
     });
   }
 
-  @Get()
+  @Get(':key')
   @ApiParam({ name: 'key', type: 'string' })
-  async getHello(@Param() key: string): Promise<StatusProcessDto> {
+  async getHello(@Param('key') key: string): Promise<StatusProcessDto> {
     return await this.managerFileService.checkStatusProcessFile(key);
   }
 }

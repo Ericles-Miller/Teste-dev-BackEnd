@@ -44,7 +44,7 @@ export class ManagerFileService {
         })
         .pipe(timeout(5000));
 
-      this.processFile(filePath)
+      this.processFile(filePath, uploadId)
         .then(() => {
           console.log(`File processing completed for: ${filePath}`);
         })
@@ -58,7 +58,7 @@ export class ManagerFileService {
     }
   }
 
-  async processFile(filePath: string): Promise<void> {
+  async processFile(filePath: string, uploadId: string): Promise<void> {
     const batch: string[] = [];
     let processedCount = 0;
     const self = this;
@@ -99,7 +99,7 @@ export class ManagerFileService {
           fileStream.pause();
           await self.sendBatchMessages(batch);
 
-          self.redisService.instance.emit('set-status', EStatus.PROCESS);
+          self.redisService.instance.emit('set-status', { status: EStatus.PROCESS, id: uploadId });
 
           console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
           batch.length = 0;
@@ -120,7 +120,7 @@ export class ManagerFileService {
             console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
           }
 
-          this.redisService.instance.emit('set-status', EStatus.PROCESS);
+          this.redisService.instance.emit('set-status', { status: EStatus.PROCESS, id: uploadId });
           resolve();
         })
         .on('error', reject);
