@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { RedisProcessService } from './redis-process.service';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { RedisProcessController } from './redis-process.controller';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -10,8 +10,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     ClientsModule.registerAsync([
       {
         name: 'REDIS_PROCESS_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
         useFactory: async () => ({
           transport: Transport.REDIS,
           options: {
