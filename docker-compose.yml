@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15.3-alpine
-    container_name: postgresChallengeFlow
+    container_name: ChallengeFlow
     restart: always
     environment:
       POSTGRES_PASSWORD: mysecretpassword
@@ -14,26 +14,47 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
   
   rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
+    image: 'rabbitmq:3.8-management-alpine'
+    container_name: nest_msg_rabbitmq
+    restart: always
     ports:
-      - "5672:5672" # Porta usada pelos clientes e integradores
-      - "15672:15672" # Porta da interface de administração do RabbitMQ
-    environment:
-      RABBITMQ_DEFAULT_USER: admin # Usuário padrão
-      RABBITMQ_DEFAULT_PASS: admin # Senha padrão
+      - '15672:15672'
+      - '5672:5672'
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_data:/var/lib/rabbitmq/mnesiax
   
   redis:
     container_name: redis
-    image: redis:7.0
+    image: redis:alpine
     ports:
       - "6379:6379"
     volumes:
       - redis-data:/data
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      - "4510-4559:4510-4559"  # external services port range
+    environment:
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - SERVICES=s3,sqs,iam
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DATA_DIR=/tmp/localstack/data
+      - IAM_LOAD_SYSTEM_POLICIES=1
+    volumes:
+      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
       
 volumes:
   pgdata:
   rabbitmq_data:
   redis-data:
+  localstack_data:
+
+networks:
+  default:

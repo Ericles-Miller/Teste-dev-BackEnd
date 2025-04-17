@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common/decorators/core';
 import { MessagePattern } from '@nestjs/microservices';
 import { SetStatusDto } from 'apps/api/src/redis/set-status.dto';
 import Redis from 'ioredis';

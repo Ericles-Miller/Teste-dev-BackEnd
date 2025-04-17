@@ -3,8 +3,5 @@ import { ClientRedis } from '@nestjs/microservices';
 
 @Injectable()
 export class RedisService {
-  constructor(
-    @Inject('REDIS_SERVICE')
-    public instance: ClientRedis,
-  ) {}
+  constructor() {} //   public instance: ClientRedis, //   @Inject('REDIS_SERVICE')
 }

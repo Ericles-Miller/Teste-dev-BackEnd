@@ -2,10 +2,15 @@ import { Module } from '@nestjs/common';
 import { ManagerFileController } from './manager-file.controller';
 import { ManagerFileService } from './manager-file.service';
 import { RabbitmqModule } from '../rabbitmq/rabbitmq.module';
-import { RedisModule } from '../redis/redis.module';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
-  imports: [RabbitmqModule, RedisModule],
+  imports: [
+    RabbitmqModule,
+    MulterModule.register({
+      dest: './uploads',
+    }),
+  ],
   controllers: [ManagerFileController],
   providers: [ManagerFileService],
 })

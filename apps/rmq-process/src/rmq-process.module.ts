@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { RmqProcessService } from './rmq-process.service';
+import { RabbitMqService } from 'apps/api/src/rabbitmq/rabbitmq.service';
 import { UsersModule } from 'apps/api/src/users/users.module';
 
 @Module({
   imports: [UsersModule],
   controllers: [],
-  providers: [RmqProcessService],
+  providers: [RabbitMqService],
 })
 export class RmqProcessModule {}
