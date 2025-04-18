@@ -2,53 +2,87 @@ services:
   db:
     image: postgres:15.3-alpine
     container_name: ChallengeFlow
-    restart: always
+    restart: on-failure
+    stop_signal: SIGINT
+    stop_grace_period: 1m
+    init: true
     environment:
       POSTGRES_PASSWORD: mysecretpassword
       POSTGRES_USER: myuser
       POSTGRES_DB: mydatabase
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydatabase"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   
   rabbitmq:
     image: 'rabbitmq:3.8-management-alpine'
     container_name: nest_msg_rabbitmq
-    restart: always
+    restart: on-failure
+    stop_signal: SIGINT
+    stop_grace_period: 1m
+    init: true
     ports:
-      - '15672:15672'
-      - '5672:5672'
+      - "127.0.0.1:15672:15672"
+      - "127.0.0.1:5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_VHOST=/
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq/mnesiax
+      - rabbitmq_data:/var/lib/rabbitmq/mnesia
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "status"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   
   redis:
     container_name: redis
     image: redis:alpine
+    restart: on-failure
+    stop_signal: SIGINT
+    stop_grace_period: 30s
+    init: true
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   localstack:
     image: localstack/localstack:latest
     container_name: localstack
+    restart: on-failure
+    stop_signal: SIGINT
+    stop_grace_period: 30s
+    init: true
     ports:
-      - "4566:4566"            # LocalStack Gateway
-      - "4510-4559:4510-4559"  # external services port range
+      - "127.0.0.1:4566:4566"
     environment:
       - DEBUG=1
-      - DOCKER_HOST=unix:///var/run/docker.sock
       - SERVICES=s3,sqs,iam
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
-      - DATA_DIR=/tmp/localstack/data
-      - IAM_LOAD_SYSTEM_POLICIES=1
-    volumes:
-      - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - TMPDIR=/tmp/localstack_tmp
+      - DISABLE_CORS_CHECKS=1
+      - SKIP_SSL_CERT_DOWNLOAD=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LAMBDA_EXECUTOR=local
+      - PERSISTENCE=0
+      - CLEAR_TMP_FOLDER=0
+    tmpfs:
+      - /tmp/localstack_tmp
       
 volumes:
   pgdata:
