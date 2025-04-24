@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
-import { CreateUserDto } from '../users/dto/create-user.dto';
 import { RabbitMqService } from '../rabbitmq/rabbitmq.service';
 import { createReadStream } from 'fs';
 import * as csv from 'csv-parser';
@@ -18,41 +17,51 @@ export class ManagerFileService {
   async processStream(file: Express.Multer.File): Promise<string> {
     const uploadId = uuid();
 
-    const uploadDir = path.resolve(__dirname, '../../tmp');
+    if (!file || !file.buffer) {
+      throw new BadRequestException('Invalid file');
+    }
+
+    const uploadDir = path.resolve(process.cwd(), 'uploads');
     const filePath = path.join(uploadDir, `file-${uploadId}.csv`);
 
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
 
-    await fs.promises.writeFile(filePath, file.buffer);
+    // Salvar o arquivo de forma síncrona
+    try {
+      fs.writeFileSync(filePath, file.buffer);
+    } catch {
+      throw new BadRequestException('Não foi possível salvar o arquivo');
+    }
 
     try {
       await this.validateCsvHeaders(filePath);
 
       this.processFile(filePath, uploadId)
-        .then(() => {
-          console.log(`File processing completed for: ${filePath}`);
-        })
-        .catch((error) => {
-          console.error('Error processing file:', error);
-        });
+        .then(() => {})
+        .catch(() => {});
 
       return uploadId;
     } catch (error) {
       // Se houver erro na validação, remove o arquivo
       try {
-        await fs.promises.unlink(filePath);
-      } catch (unlinkError) {
-        console.error('Error removing invalid file:', unlinkError);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch {
+        // Ignorar erros ao remover
       }
       throw error;
     }
   }
 
   async processFile(filePath: string, uploadId: string): Promise<void> {
-    const batch: CreateUserDto[] = [];
-    let processedCount = 0;
+    if (!fs.existsSync(filePath)) {
+      throw new BadRequestException(`Arquivo não encontrado: ${filePath}`);
+    }
+
+    const batch: string[] = [];
 
     const fileStream = createReadStream(filePath, { highWaterMark: 128 * 1024 });
     const transformToObject = csv({
@@ -60,7 +69,7 @@ export class ManagerFileService {
       skipComments: true,
       quote: '"',
       escape: '"',
-      skipLines: 0, // Não pular a primeira linha, vamos usar os headers para mapear
+      skipLines: 0,
       headers: [
         'id',
         'gender',
@@ -83,9 +92,7 @@ export class ManagerFileService {
 
       write: async (chunk, encoding, next) => {
         try {
-          const userData: CreateUserDto = this.mapToUserDto(chunk);
-          batch.push(userData);
-          processedCount++;
+          batch.push(chunk);
 
           if (batch.length >= 1500) {
             fileStream.pause();
@@ -93,14 +100,13 @@ export class ManagerFileService {
 
             //self.redisService.instance.emit('set-status', EStatus.PROCESS);
 
-            console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
+            console.log(`Enviado batch de ${batch.length} registros. Total processado:`);
             batch.length = 0;
             fileStream.resume();
           }
 
           next();
         } catch (error) {
-          console.error('Error processing row:', error);
           next(error);
         }
       },
@@ -111,36 +117,30 @@ export class ManagerFileService {
         .pipe(transformToObject)
         .pipe(writableStreamFile)
         .on('finish', async () => {
-          if (batch.length > 0) {
-            await this.sendToQueue(uploadId, [...batch]);
-            console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
-          }
+          try {
+            if (batch.length > 0) {
+              await this.sendToQueue(uploadId, [...batch]);
+            }
 
-          resolve();
+            // Remover arquivo após processamento
+            try {
+              if (fs.existsSync(filePath)) {
+                fs.unlinkSync(filePath);
+              }
+            } catch {
+              // Ignorar erros ao remover
+            }
+
+            resolve();
+          } catch (error) {
+            reject(error);
+          }
         })
         .on('error', reject);
     });
   }
 
-  private mapToUserDto(data: any): CreateUserDto {
-    return {
-      id: data.id,
-      gender: data.gender,
-      nameSet: data.nameSet,
-      title: data.title,
-      givName: data.givName,
-      surName: data.surName,
-      streetAddress: data.streetAddress,
-      city: data.city,
-      emailAddress: data.emailAddress,
-      tropicalZodiac: data.tropicalZodiac,
-      occupation: data.occupation,
-      vehicle: data.vehicle,
-      countryFull: data.countryFull,
-    };
-  }
-
-  private async sendToQueue(uploadId: string, batch: CreateUserDto[]): Promise<void> {
+  private async sendToQueue(uploadId: string, batch: string[]): Promise<void> {
     await this.rabbitMqService.sendToQueueProcessFile({
       uploadId,
       batch,
