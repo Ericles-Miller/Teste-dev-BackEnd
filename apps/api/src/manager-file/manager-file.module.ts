@@ -4,12 +4,7 @@ import { RabbitmqModule } from '../rabbitmq/rabbitmq.module';
 import { ManagerFileService } from './manager-file.service';
 
 @Module({
-  imports: [
-    RabbitmqModule,
-    // MulterModule.register({
-    //   dest: './uploads',
-    // }),
-  ],
+  imports: [RabbitmqModule],
   controllers: [ManagerFileController],
   providers: [ManagerFileService],
 })

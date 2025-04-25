@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { RabbitMqService } from '../rabbitmq/rabbitmq.service';
 import { createReadStream } from 'fs';
@@ -24,18 +24,11 @@ export class ManagerFileService {
     const uploadDir = path.resolve(process.cwd(), 'uploads');
     const filePath = path.join(uploadDir, `file-${uploadId}.csv`);
 
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
-    // Salvar o arquivo de forma síncrona
     try {
       fs.writeFileSync(filePath, file.buffer);
-    } catch {
-      throw new BadRequestException('Não foi possível salvar o arquivo');
-    }
 
-    try {
       await this.validateCsvHeaders(filePath);
 
       this.processFile(filePath, uploadId)
@@ -44,21 +37,19 @@ export class ManagerFileService {
 
       return uploadId;
     } catch (error) {
-      // Se houver erro na validação, remove o arquivo
-      try {
-        if (fs.existsSync(filePath)) {
-          fs.unlinkSync(filePath);
-        }
-      } catch {
-        // Ignorar erros ao remover
-      }
-      throw error;
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+      if (error instanceof BadRequestException) throw error;
+
+      throw new InternalServerErrorException('Error to process file', error);
     }
   }
 
   async processFile(filePath: string, uploadId: string): Promise<void> {
+    let processedCount = 0;
+
     if (!fs.existsSync(filePath)) {
-      throw new BadRequestException(`Arquivo não encontrado: ${filePath}`);
+      throw new BadRequestException(`Not Found File: ${filePath}`);
     }
 
     const batch: string[] = [];
@@ -93,6 +84,7 @@ export class ManagerFileService {
       write: async (chunk, encoding, next) => {
         try {
           batch.push(chunk);
+          processedCount++;
 
           if (batch.length >= 1500) {
             fileStream.pause();
@@ -100,7 +92,7 @@ export class ManagerFileService {
 
             //self.redisService.instance.emit('set-status', EStatus.PROCESS);
 
-            console.log(`Enviado batch de ${batch.length} registros. Total processado:`);
+            console.log(`Send batch ${batch.length}. Total process: ${processedCount}`);
             batch.length = 0;
             fileStream.resume();
           }
@@ -118,18 +110,9 @@ export class ManagerFileService {
         .pipe(writableStreamFile)
         .on('finish', async () => {
           try {
-            if (batch.length > 0) {
-              await this.sendToQueue(uploadId, [...batch]);
-            }
+            if (batch.length > 0) await this.sendToQueue(uploadId, [...batch]);
 
-            // Remover arquivo após processamento
-            try {
-              if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-              }
-            } catch {
-              // Ignorar erros ao remover
-            }
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
             resolve();
           } catch (error) {
@@ -169,14 +152,14 @@ export class ManagerFileService {
 
           const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header));
           if (missingHeaders.length > 0) {
-            reject(new BadRequestException(`Cabeçalhos obrigatórios ausentes: ${missingHeaders.join(', ')}`));
+            reject(new BadRequestException(`Missing mandatory headers: ${missingHeaders.join(', ')}`));
           }
 
           stream.destroy();
           resolve(headers);
         })
         .on('error', () => {
-          reject(new BadRequestException('Erro ao ler o arquivo CSV'));
+          reject(new BadRequestException('Error reading CSV file'));
         });
     });
   }
