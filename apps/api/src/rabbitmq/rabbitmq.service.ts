@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { RabbitMqConfig } from './rabbitmq.config';
-import { SendToQueueProcessFileDto } from './dtos/send-to-queue-process-file.dto';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
@@ -14,11 +14,16 @@ export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
     await RabbitMqConfig.closeConnection();
   }
 
-  async sendToQueueProcessFile(userDto: SendToQueueProcessFileDto): Promise<boolean> {
+  async sendToQueueProcessFile(uploadId: string, batch: CreateUserDto[]): Promise<boolean> {
     try {
+      const payload = {
+        uploadId,
+        batch,
+      };
+
       await RabbitMqConfig.publishMessage({
         routingKey: 'processFile',
-        message: JSON.stringify(userDto),
+        message: JSON.stringify(payload),
         options: {
           persistent: true,
           queueName: 'processFile',

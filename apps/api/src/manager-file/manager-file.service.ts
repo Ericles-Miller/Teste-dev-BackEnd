@@ -5,7 +5,8 @@ import { createReadStream } from 'fs';
 import * as csv from 'csv-parser';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Writable } from 'stream';
+import { Transform, Writable } from 'stream';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class ManagerFileService {
@@ -29,7 +30,7 @@ export class ManagerFileService {
     try {
       fs.writeFileSync(filePath, file.buffer);
 
-      await this.validateCsvHeaders(filePath);
+      //await this.validateCsvHeaders(filePath);
 
       this.processFile(filePath, uploadId)
         .then(() => {})
@@ -52,15 +53,13 @@ export class ManagerFileService {
       throw new BadRequestException(`Not Found File: ${filePath}`);
     }
 
-    const batch: string[] = [];
+    const batch: CreateUserDto[] = [];
 
     const fileStream = createReadStream(filePath, { highWaterMark: 128 * 1024 });
     const transformToObject = csv({
-      separator: ';',
+      separator: ',',
       skipComments: true,
-      quote: '"',
-      escape: '"',
-      skipLines: 0,
+      skipLines: 1,
       headers: [
         'id',
         'gender',
@@ -78,29 +77,33 @@ export class ManagerFileService {
       ],
     });
 
-    const writableStreamFile = new Writable({
+    const writableStreamFile = new Transform({
       objectMode: true,
+      transform: async (chunk, encoding, callback) => {
+        const jsonStr = JSON.stringify(chunk);
+        callback(null, jsonStr);
+      },
+    });
 
+    const writeTableStream = new Writable({
       write: async (chunk, encoding, next) => {
-        try {
-          batch.push(chunk);
-          processedCount++;
+        const stringData = chunk.toString();
+        const dataRow: CreateUserDto = JSON.parse(stringData);
 
-          if (batch.length >= 1500) {
-            fileStream.pause();
-            await this.sendToQueue(uploadId, [...batch]);
+        batch.push(dataRow);
+        processedCount++;
 
-            //self.redisService.instance.emit('set-status', EStatus.PROCESS);
+        if (batch.length >= 1000) {
+          fileStream.pause();
+          await this.sendToQueue(uploadId, batch);
 
-            console.log(`Send batch ${batch.length}. Total process: ${processedCount}`);
-            batch.length = 0;
-            fileStream.resume();
-          }
+          //self.redisService.instance.emit('set-status', EStatus.PROCESS);
 
-          next();
-        } catch (error) {
-          next(error);
+          console.log(`Send batch ${batch.length}. Total process: ${processedCount}`);
+          batch.length = 0;
+          fileStream.resume();
         }
+        next();
       },
     });
 
@@ -108,59 +111,52 @@ export class ManagerFileService {
       fileStream
         .pipe(transformToObject)
         .pipe(writableStreamFile)
+        .pipe(writeTableStream)
         .on('finish', async () => {
-          try {
-            if (batch.length > 0) await this.sendToQueue(uploadId, [...batch]);
+          if (batch.length > 0) await this.sendToQueue(uploadId, batch);
 
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-
-            resolve();
-          } catch (error) {
-            reject(error);
-          }
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+          resolve();
         })
         .on('error', reject);
     });
   }
 
-  private async sendToQueue(uploadId: string, batch: string[]): Promise<void> {
-    await this.rabbitMqService.sendToQueueProcessFile({
-      uploadId,
-      batch,
-    });
+  private async sendToQueue(uploadId: string, batch: CreateUserDto[]): Promise<void> {
+    await this.rabbitMqService.sendToQueueProcessFile(uploadId, batch);
   }
 
-  private async validateCsvHeaders(filePath: string): Promise<string[]> {
-    return new Promise((resolve, reject) => {
-      const stream = createReadStream(filePath)
-        .pipe(csv())
-        .on('headers', (headers: string[]) => {
-          const requiredHeaders = [
-            'Gender',
-            'NameSet',
-            'Title',
-            'GivenName',
-            'Surname',
-            'StreetAddress',
-            'City',
-            'EmailAddress',
-            'TropicalZodiac',
-            'Occupation',
-            'Vehicle',
-            'CountryFull',
-          ];
+  // private async validateCsvHeaders(filePath: string): Promise<string[]> {
+  //   return new Promise((resolve, reject) => {
+  //     const stream = createReadStream(filePath)
+  //       .pipe(csv())
+  //       .on('headers', (headers: string[]) => {
+  //         const requiredHeaders = [
+  //           'Gender',
+  //           'NameSet',
+  //           'Title',
+  //           'GivenName',
+  //           'Surname',
+  //           'StreetAddress',
+  //           'City',
+  //           'EmailAddress',
+  //           'TropicalZodiac',
+  //           'Occupation',
+  //           'Vehicle',
+  //           'CountryFull',
+  //         ];
 
-          const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header));
-          if (missingHeaders.length > 0) {
-            reject(new BadRequestException(`Missing mandatory headers: ${missingHeaders.join(', ')}`));
-          }
+  //         const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header));
+  //         if (missingHeaders.length > 0) {
+  //           reject(new BadRequestException(`Missing mandatory headers: ${missingHeaders.join(', ')}`));
+  //         }
 
-          stream.destroy();
-          resolve(headers);
-        })
-        .on('error', () => {
-          reject(new BadRequestException('Error reading CSV file'));
-        });
-    });
-  }
+  //         stream.destroy();
+  //         resolve(headers);
+  //       })
+  //       .on('error', () => {
+  //         reject(new BadRequestException('Error reading CSV file'));
+  //       });
+  //   });
+  // }
 }

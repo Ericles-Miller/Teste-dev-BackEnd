@@ -9,9 +9,9 @@ export const queues: IQueue[] = [
     durable: true,
     routingKeys: ['processFile'],
   },
-  {
-    name: 'uploadFile',
-    durable: true,
-    routingKeys: ['UploadFile'],
-  },
+  // {
+  //   name: 'uploadFile',
+  //   durable: true,
+  //   routingKeys: ['UploadFile'],
+  // },
 ];
