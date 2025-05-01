@@ -6,7 +6,7 @@ import * as csv from 'csv-parser';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Transform, Writable } from 'stream';
-import { CreateUserDto } from '../users/dto/create-user.dto';
+import { CreateUserDto } from '../user/dto/create-user.dto';
 
 @Injectable()
 export class ManagerFileService {
