@@ -1,6 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import 'dotenv/config';
 import { User } from '../users/entities/user.entity';
+import { CreateTableUser1732889293308 } from './migrations/1732859293308-createTableUser';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
@@ -11,7 +12,7 @@ export const dataSourceOptions: DataSourceOptions = {
   port: Number(process.env.DATABASE_PORT),
   synchronize: false,
   entities: [User],
-  migrations: [__dirname + 'migrations/**/*.js'],
+  migrations: [CreateTableUser1732889293308],
   migrationsRun: true,
   logging: process.env.NODE_ENV === 'development' ? true : false,
 };
