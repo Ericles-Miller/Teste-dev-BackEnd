@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
 import { IQueue } from 'apps/api/src/rabbitmq/interfaces/queue.interface';
 import { queues } from 'apps/api/src/rabbitmq/queue.constants';
 import { RabbitMqConfig } from 'apps/api/src/rabbitmq/rabbitmq.config';
@@ -13,7 +13,7 @@ export class ConsumerService implements OnModuleInit {
       await this.setupConsumers();
       await S3Config.ensureBucketExists();
     } catch (error) {
-      console.error('Erro ao inicializar serviços:', error);
+      throw new InternalServerErrorException('Error to started service:', error);
     }
   }
 
@@ -29,45 +29,38 @@ export class ConsumerService implements OnModuleInit {
         channel.consume(queue.name, async (message) => {
           try {
             if (message) {
-              const content = JSON.parse(message.content.toString());
+              await channel.assertQueue(queue.name, {
+                durable: queue.durable,
+              });
 
-              await this.processMessage(content, queue);
-              channel.ack(message);
+              channel.consume(queue.name, async (message) => {
+                if (message) {
+                  const contentAsString = message.content.toString();
+
+                  const content: SendToQueueProcessFileDto = JSON.parse(contentAsString);
+
+                  await this.processMessage(content, queue);
+                  channel.ack(message);
+                }
+              });
             }
           } catch {
             channel.nack(message, false, true);
           }
         });
-      } catch (error) {
-        console.error(`Erro ao configurar consumidor para a fila ${queue.name}:`, error);
+      } catch {
+        // log elastic
+        // redis return error
       }
     }
   }
 
-  private async processMessage(content: any, queue: IQueue): Promise<void> {
+  private async processMessage({ batch, uploadId }: SendToQueueProcessFileDto, queue: IQueue): Promise<void> {
     try {
-      switch (queue.name) {
-        case 'processFile':
-          await this.processFileMessage(content as SendToQueueProcessFileDto);
-          break;
-        default:
-          console.warn(`Fila ${queue.name} não possui processador específico`);
-      }
+      await this.saveToS3(uploadId, batch);
+      await this.saveToDB(batch);
     } catch (error) {
       console.error(`Erro no processamento da mensagem na fila ${queue.name}:`, error);
-      throw error;
-    }
-  }
-
-  private async processFileMessage(message: SendToQueueProcessFileDto): Promise<void> {
-    const { uploadId, batch } = message;
-
-    try {
-      console.log(`Processando batch com ${batch.length} itens para uploadId: ${uploadId}`);
-      //await this.saveToS3(uploadId, batch);
-      //await this.saveToDB(batch);
-    } catch (error) {
-      console.error(`Erro ao processar batch para uploadId: ${uploadId}`, error);
       throw error;
     }
   }

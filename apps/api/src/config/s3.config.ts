@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import { S3 } from 'aws-sdk';
 
 export class S3Config {
@@ -38,15 +39,11 @@ export class S3Config {
 
     try {
       await s3.headBucket({ Bucket: bucketName }).promise();
-      console.log(`Bucket ${bucketName} já existe`);
     } catch (error) {
       if (error.code === 'NotFound' || error.code === 'NoSuchBucket') {
-        console.log(`Criando bucket ${bucketName}...`);
         await s3.createBucket({ Bucket: bucketName }).promise();
-        console.log(`Bucket ${bucketName} criado com sucesso`);
       } else {
-        console.error(`Erro ao verificar/criar bucket ${bucketName}:`, error);
-        throw error;
+        throw new InternalServerErrorException('Error to Create a new Bucket!');
       }
     }
   }

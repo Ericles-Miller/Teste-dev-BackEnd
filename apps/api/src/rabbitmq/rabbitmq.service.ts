@@ -16,14 +16,14 @@ export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
 
   async sendToQueueProcessFile(uploadId: string, batch: CreateUserDto[]): Promise<boolean> {
     try {
-      const payload = {
+      const message = {
         uploadId,
         batch,
       };
 
       await RabbitMqConfig.publishMessage({
         routingKey: 'processFile',
-        message: JSON.stringify(payload),
+        message,
         options: {
           persistent: true,
           queueName: 'processFile',
