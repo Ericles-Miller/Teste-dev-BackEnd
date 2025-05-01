@@ -1,7 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import 'dotenv/config';
-import { User } from '../users/entities/user.entity';
 import { CreateTableUser1732889293308 } from './migrations/1732859293308-createTableUser';
+import { User } from '../user/entities/user.entity';
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
