@@ -12,15 +12,15 @@ export class ManagerFileController {
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
-    description: 'List Of users',
+    description: 'upload file with info users',
     type: FileUploadDto,
   })
   @Post()
-  async uploadFile(@UploadedFile() file, @Res() response): Promise<Response> {
-    const uploadId = await this.managerFileService.uploadFile(file);
+  async uploadFile(@UploadedFile() file: Express.Multer.File, @Res() response): Promise<Response> {
+    const uploadId = await this.managerFileService.processStream(file);
 
     return response.status(201).json({
-      message: 'Arquivo recebido com sucesso. Processamento iniciado.',
+      message: 'File received successfully. Processing started.',
       uploadId,
     });
   }
