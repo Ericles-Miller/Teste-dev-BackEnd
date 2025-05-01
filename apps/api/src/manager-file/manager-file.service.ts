@@ -1,63 +1,64 @@
-/* eslint-disable @typescript-eslint/no-this-alias */
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { v4 as uuid } from 'uuid';
+import { RabbitMqService } from '../rabbitmq/rabbitmq.service';
 import { createReadStream } from 'fs';
 import * as csv from 'csv-parser';
-import { v4 as uuid } from 'uuid';
-import { RedisService } from '../redis/redis.service';
-import { EStatus } from '../redis/status.enum';
-import { AwsService } from '../aws/aws.service';
 import * as fs from 'fs';
 import * as path from 'path';
-import { config } from 'apps/rabbit-mq-process/src/config';
-import { Writable } from 'stream';
+import { Transform, Writable } from 'stream';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 @Injectable()
 export class ManagerFileService {
-  constructor(
-    private readonly redisService: RedisService,
-    private readonly awsService: AwsService,
-  ) {}
+  private readonly CHUNK_SIZE = 1024 * 1024;
+  private readonly BATCH_SIZE = 10000;
 
-  async uploadFile(file: any): Promise<string> {
+  constructor(private readonly rabbitMqService: RabbitMqService) {}
+
+  async processStream(file: Express.Multer.File): Promise<string> {
+    const uploadId = uuid();
+
+    if (!file || !file.buffer) {
+      throw new BadRequestException('Invalid file');
+    }
+
+    const uploadDir = path.resolve(process.cwd(), 'uploads');
+    const filePath = path.join(uploadDir, `file-${uploadId}.csv`);
+
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
     try {
-      const uploadId = uuid();
+      fs.writeFileSync(filePath, file.buffer);
 
-      const uploadDir = path.resolve(__dirname, '../../tmp');
-      const filePath = path.join(uploadDir, `file-${uploadId}.csv`);
+      //await this.validateCsvHeaders(filePath);
 
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
-      await fs.promises.writeFile(filePath, file.buffer);
-
-      this.redisService.instance.emit('set-status', EStatus.PROCESS);
-
-      this.processFile(filePath)
-        .then(() => {
-          console.log(`File processing completed for: ${filePath}`);
-        })
-        .catch((error) => {
-          console.error('Error processing file:', error);
-        });
+      this.processFile(filePath, uploadId)
+        .then(() => {})
+        .catch(() => {});
 
       return uploadId;
-    } catch {
-      throw new InternalServerErrorException();
+    } catch (error) {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+      if (error instanceof BadRequestException) throw error;
+
+      throw new InternalServerErrorException('Error to process file', error);
     }
   }
 
-  async processFile(filePath: string): Promise<void> {
-    const batch: string[] = [];
+  async processFile(filePath: string, uploadId: string): Promise<void> {
     let processedCount = 0;
-    const self = this;
+
+    if (!fs.existsSync(filePath)) {
+      throw new BadRequestException(`Not Found File: ${filePath}`);
+    }
+
+    const batch: CreateUserDto[] = [];
 
     const fileStream = createReadStream(filePath, { highWaterMark: 128 * 1024 });
     const transformToObject = csv({
-      separator: ';',
+      separator: ',',
       skipComments: true,
-      quote: '"',
-      escape: '"',
       skipLines: 1,
       headers: [
         'id',
@@ -76,25 +77,32 @@ export class ManagerFileService {
       ],
     });
 
-    const writableStreamFile = new Writable({
+    const writableStreamFile = new Transform({
       objectMode: true,
+      transform: async (chunk, encoding, callback) => {
+        const jsonStr = JSON.stringify(chunk);
+        callback(null, jsonStr);
+      },
+    });
 
-      async write(chunk, encoding, next) {
-        const rowData = Object.values(chunk).join(',');
-        batch.push(rowData);
+    const writeTableStream = new Writable({
+      write: async (chunk, encoding, next) => {
+        const stringData = chunk.toString();
+        const dataRow: CreateUserDto = JSON.parse(stringData);
+
+        batch.push(dataRow);
         processedCount++;
 
-        if (batch.length >= 1500) {
+        if (batch.length >= 1000) {
           fileStream.pause();
-          await self.sendBatchMessages(batch);
+          await this.sendToQueue(uploadId, batch);
 
-          self.redisService.instance.emit('set-status', EStatus.PROCESS);
+          //self.redisService.instance.emit('set-status', EStatus.PROCESS);
 
-          console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
+          console.log(`Send batch ${batch.length}. Total process: ${processedCount}`);
           batch.length = 0;
           fileStream.resume();
         }
-
         next();
       },
     });
@@ -103,22 +111,52 @@ export class ManagerFileService {
       fileStream
         .pipe(transformToObject)
         .pipe(writableStreamFile)
+        .pipe(writeTableStream)
         .on('finish', async () => {
-          if (batch.length > 0) {
-            await self.sendBatchMessages(batch);
-            console.log(`Enviado batch de ${batch.length} registros. Total processado: ${processedCount}`);
-          }
+          if (batch.length > 0) await this.sendToQueue(uploadId, batch);
 
-          this.redisService.instance.emit('set-status', EStatus.PROCESS);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
           resolve();
         })
         .on('error', reject);
     });
   }
 
-  private async sendBatchMessages(batch: string[]): Promise<void> {
-    await this.awsService.sendMessage(config.queueUrl, {
-      batch,
-    });
+  private async sendToQueue(uploadId: string, batch: CreateUserDto[]): Promise<void> {
+    await this.rabbitMqService.sendToQueueProcessFile(uploadId, batch);
   }
+
+  // private async validateCsvHeaders(filePath: string): Promise<string[]> {
+  //   return new Promise((resolve, reject) => {
+  //     const stream = createReadStream(filePath)
+  //       .pipe(csv())
+  //       .on('headers', (headers: string[]) => {
+  //         const requiredHeaders = [
+  //           'Gender',
+  //           'NameSet',
+  //           'Title',
+  //           'GivenName',
+  //           'Surname',
+  //           'StreetAddress',
+  //           'City',
+  //           'EmailAddress',
+  //           'TropicalZodiac',
+  //           'Occupation',
+  //           'Vehicle',
+  //           'CountryFull',
+  //         ];
+
+  //         const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header));
+  //         if (missingHeaders.length > 0) {
+  //           reject(new BadRequestException(`Missing mandatory headers: ${missingHeaders.join(', ')}`));
+  //         }
+
+  //         stream.destroy();
+  //         resolve(headers);
+  //       })
+  //       .on('error', () => {
+  //         reject(new BadRequestException('Error reading CSV file'));
+  //       });
+  //   });
+  // }
 }

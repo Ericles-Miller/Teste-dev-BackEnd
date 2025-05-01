@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ManagerFileService } from './manager-file.service';
 import { ManagerFileController } from './manager-file.controller';
-import { RedisModule } from '../redis/redis.module';
-import { AwsModule } from '../aws/aws.module';
+import { RabbitmqModule } from '../rabbitmq/rabbitmq.module';
+import { ManagerFileService } from './manager-file.service';
 
 @Module({
-  imports: [RedisModule, AwsModule],
+  imports: [RabbitmqModule],
   controllers: [ManagerFileController],
   providers: [ManagerFileService],
 })
