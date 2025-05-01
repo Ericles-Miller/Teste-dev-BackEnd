@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { RabbitMqConfig } from './rabbitmq.config';
-import { CreateUserDto } from '../users/dto/create-user.dto';
+import { CreateUserDto } from '../user/dto/create-user.dto';
 
 @Injectable()
 export class RabbitMqService implements OnModuleInit, OnModuleDestroy {

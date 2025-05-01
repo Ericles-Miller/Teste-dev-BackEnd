@@ -1,12 +1,14 @@
 import { Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
-import { IQueue } from 'apps/api/src/rabbitmq/interfaces/queue.interface';
 import { queues } from 'apps/api/src/rabbitmq/queue.constants';
 import { RabbitMqConfig } from 'apps/api/src/rabbitmq/rabbitmq.config';
 import { SendToQueueProcessFileDto } from 'apps/api/src/rabbitmq/dtos/send-to-queue-process-file.dto';
 import { S3Config } from 'apps/api/src/config/s3.config';
+import { UserService } from 'apps/api/src/user/user.service';
 
 @Injectable()
 export class ConsumerService implements OnModuleInit {
+  constructor(private readonly userService: UserService) {}
+
   async onModuleInit() {
     try {
       await RabbitMqConfig.connect();
@@ -39,7 +41,7 @@ export class ConsumerService implements OnModuleInit {
 
                   const content: SendToQueueProcessFileDto = JSON.parse(contentAsString);
 
-                  await this.processMessage(content, queue);
+                  await this.processMessage(content);
                   channel.ack(message);
                 }
               });
@@ -55,18 +57,18 @@ export class ConsumerService implements OnModuleInit {
     }
   }
 
-  private async processMessage({ batch, uploadId }: SendToQueueProcessFileDto, queue: IQueue): Promise<void> {
+  private async processMessage({ batch, uploadId }: SendToQueueProcessFileDto): Promise<void> {
     try {
-      await this.saveToS3(uploadId, batch);
+      // await this.saveToS3(uploadId, batch);
       await this.saveToDB(batch);
+      // atualiza o redis com o id
     } catch (error) {
-      console.error(`Erro no processamento da mensagem na fila ${queue.name}:`, error);
-      throw error;
+      throw new InternalServerErrorException('Error to process file and save in database', error);
     }
   }
 
   private async saveToS3(uploadId: string, batch: any[]): Promise<void> {
-    const batchId = Date.now(); // Identificador único para o batch
+    const batchId = Date.now();
     const key = `uploads/${uploadId}/batch-${batchId}.json`;
 
     try {
@@ -79,8 +81,6 @@ export class ConsumerService implements OnModuleInit {
   }
 
   private async saveToDB(batch: any[]): Promise<void> {
-    // Implementar lógica para salvar no banco de dados
-    // Exemplo: await this.userRepository.saveMany(batch);
-    console.log(`Batch enviado para processamento no banco de dados, ${batch.length} registros`);
+    await this.userService.createMany(batch);
   }
 }

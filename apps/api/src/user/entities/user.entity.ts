@@ -12,7 +12,7 @@ export class User {
   gender: string;
 
   @ApiProperty()
-  @Column({ name: 'nameset' })
+  @Column({ name: 'nameSet' })
   nameSet: string;
 
   @ApiProperty()
@@ -20,15 +20,15 @@ export class User {
   title: string;
 
   @ApiProperty()
-  @Column({ name: 'givname' })
+  @Column({ name: 'givName' })
   givName: string;
 
   @ApiProperty()
-  @Column({ name: 'surname' })
+  @Column({ name: 'surName' })
   surName: string;
 
   @ApiProperty()
-  @Column({ name: 'streetaddress' })
+  @Column({ name: 'streetAddress' })
   streetAddress: string;
 
   @ApiProperty()
@@ -36,11 +36,11 @@ export class User {
   city: string;
 
   @ApiProperty()
-  @Column({ name: 'emailaddress' })
+  @Column({ name: 'emailAddress' })
   emailAddress: string;
 
   @ApiProperty()
-  @Column({ name: 'tropicalzodiac' })
+  @Column({ name: 'tropicalZodiac' })
   tropicalZodiac: string;
 
   @ApiProperty()
@@ -52,6 +52,6 @@ export class User {
   vehicle: string;
 
   @ApiProperty()
-  @Column({ name: 'countryfull' })
+  @Column({ name: 'countryFull' })
   countryFull: string;
 }
