@@ -1,53 +1,86 @@
-import { Injectable } from '@nestjs/common';
-import { Ctx, MessagePattern, Payload, RmqContext } from '@nestjs/microservices';
-import * as fs from 'fs';
-import * as path from 'path';
-import { error } from 'console';
-import { ProcessFileDto } from 'apps/api/src/rabbitmq/dtos/process-file.dto';
-import { UsersService } from 'apps/api/src/users/users.service';
-import { CreateUserDto } from 'apps/api/src/users/dto/create-user.dto';
+import { Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
+import { IQueue } from 'apps/api/src/rabbitmq/interfaces/queue.interface';
+import { queues } from 'apps/api/src/rabbitmq/queue.constants';
+import { RabbitMqConfig } from 'apps/api/src/rabbitmq/rabbitmq.config';
+import { SendToQueueProcessFileDto } from 'apps/api/src/rabbitmq/dtos/send-to-queue-process-file.dto';
+import { S3Config } from 'apps/api/src/config/s3.config';
 
 @Injectable()
-export class RmqProcessService {
-  constructor(private readonly userService: UsersService) {} //private readonly rabbitmqService: RabbitmqService, //private readonly redisService: RedisService,
-
-  @MessagePattern('file-upload-queue')
-  async uploadFile(@Payload() data: ProcessFileDto, @Ctx() context: RmqContext): Promise<void> {
-    const chanel = context.getChannelRef();
-    const originalMsg = context.getMessage();
-
+export class ConsumerService implements OnModuleInit {
+  async onModuleInit() {
     try {
-      const uploadDir = path.resolve(__dirname, '../../tmp');
-      const filePath = path.join(uploadDir, `file-${data.uploadId}.csv`);
-
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-
-      await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
-
-      // await this.rabbitmqService.instance.emit('process-file', { jobId, filePath });
-      // await this.redisService.instance.emit('set-status', { jobId, status: EStatus.PROCESS });
-
-      chanel.ack(originalMsg);
+      await RabbitMqConfig.connect();
+      await this.setupConsumers();
+      await S3Config.ensureBucketExists();
     } catch (error) {
-      console.error(error);
-      chanel.nack(originalMsg);
+      throw new InternalServerErrorException('Error to started service:', error);
     }
   }
 
-  @MessagePattern('process-file-queue')
-  async readFile(data: CreateUserDto, context: RmqContext): Promise<void> {
-    const chanel = context.getChannelRef();
-    const originalMsg = context.getMessage();
+  private async setupConsumers(): Promise<void> {
+    const channel = RabbitMqConfig.getChannel();
+
+    for (const queue of queues) {
+      try {
+        await channel.assertQueue(queue.name, {
+          durable: queue.durable,
+        });
+
+        channel.consume(queue.name, async (message) => {
+          try {
+            if (message) {
+              await channel.assertQueue(queue.name, {
+                durable: queue.durable,
+              });
+
+              channel.consume(queue.name, async (message) => {
+                if (message) {
+                  const contentAsString = message.content.toString();
+
+                  const content: SendToQueueProcessFileDto = JSON.parse(contentAsString);
+
+                  await this.processMessage(content, queue);
+                  channel.ack(message);
+                }
+              });
+            }
+          } catch {
+            channel.nack(message, false, true);
+          }
+        });
+      } catch {
+        // log elastic
+        // redis return error
+      }
+    }
+  }
+
+  private async processMessage({ batch, uploadId }: SendToQueueProcessFileDto, queue: IQueue): Promise<void> {
+    try {
+      await this.saveToS3(uploadId, batch);
+      await this.saveToDB(batch);
+    } catch (error) {
+      console.error(`Erro no processamento da mensagem na fila ${queue.name}:`, error);
+      throw error;
+    }
+  }
+
+  private async saveToS3(uploadId: string, batch: any[]): Promise<void> {
+    const batchId = Date.now(); // Identificador único para o batch
+    const key = `uploads/${uploadId}/batch-${batchId}.json`;
 
     try {
-      await this.userService.create(data);
-      chanel.ack(originalMsg);
-    } catch {
-      console.log(error);
-
-      chanel.nack(originalMsg);
+      await S3Config.saveObject(key, batch);
+      console.log(`Batch salvo no S3: ${key}`);
+    } catch (error) {
+      console.error(`Erro ao salvar batch no S3: ${key}`, error);
+      throw error;
     }
+  }
+
+  private async saveToDB(batch: any[]): Promise<void> {
+    // Implementar lógica para salvar no banco de dados
+    // Exemplo: await this.userRepository.saveMany(batch);
+    console.log(`Batch enviado para processamento no banco de dados, ${batch.length} registros`);
   }
 }

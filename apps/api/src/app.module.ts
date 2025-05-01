@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { dataSourceOptions } from './database/database.provider';
-import { TestModule } from './test/test.module';
 import { ManagerFileModule } from './manager-file/manager-file.module';
 import { UsersModule } from './users/users.module';
 import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
@@ -13,7 +12,7 @@ import { RedisService } from './redis/redis.service';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     RabbitmqModule,
-    TestModule,
+
     TypeOrmModule.forRoot(dataSourceOptions),
     ManagerFileModule,
     UsersModule,

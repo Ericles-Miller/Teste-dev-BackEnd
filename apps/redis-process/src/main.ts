@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { RedisProcessModule } from './redis-process.module';
+import { RedisProcessModule } from './redis-process.module2';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
