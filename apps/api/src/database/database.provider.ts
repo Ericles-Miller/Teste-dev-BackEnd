@@ -1,8 +1,7 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
-import * as dotenv from 'dotenv';
+import 'dotenv/config';
 import { User } from '../users/entities/user.entity';
 
-dotenv.config();
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   host: process.env.DATABASE_HOST,
@@ -11,12 +10,21 @@ export const dataSourceOptions: DataSourceOptions = {
   database: process.env.DATABASE_NAME,
   port: Number(process.env.DATABASE_PORT),
   synchronize: false,
-  logging: true,
   entities: [User],
-  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  migrations: [__dirname + 'migrations/**/*.js'],
   migrationsRun: true,
+  logging: process.env.NODE_ENV === 'development' ? true : false,
 };
 
 const dataSource = new DataSource(dataSourceOptions);
+
+dataSource
+  .initialize()
+  .then(() => {
+    console.log('Data Source has been initialized!');
+  })
+  .catch((error) => {
+    console.error('Error during Data Source initialization:', error);
+  });
 
 export default dataSource;
