@@ -1,14 +1,24 @@
 import { Module } from '@nestjs/common';
-import { dataSourceOptions } from './database/database.provider';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RedisModule } from './redis/redis.module';
+import { ConfigModule } from '@nestjs/config';
+import { dataSourceOptions } from './database/database.provider';
 import { ManagerFileModule } from './manager-file/manager-file.module';
-import { AwsModule } from './aws/aws.module';
-import { UserModule } from './user/user.module';
+import { UsersModule } from './users/users.module';
+import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
+import { RedisModule } from './redis/redis.module';
+import { RedisService } from './redis/redis.service';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(dataSourceOptions), RedisModule, ManagerFileModule, AwsModule, UserModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    RabbitmqModule,
+
+    TypeOrmModule.forRoot(dataSourceOptions),
+    ManagerFileModule,
+    UsersModule,
+    RedisModule,
+  ],
   controllers: [],
-  providers: [],
+  providers: [RedisService],
 })
 export class AppModule {}

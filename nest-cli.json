@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "",
+  "sourceRoot": ".",
   "compilerOptions": {
     "deleteOutDir": true,
     "webpack": true
@@ -18,13 +18,22 @@
         "tsConfigPath": "apps/api/tsconfig.app.json"
       }
     },
-    "rabbit-mq-process": {
+    "rmq-process": {
       "type": "application",
-      "root": "apps/rabbit-mq-process",
-      "entryFile": "main",  
-      "sourceRoot": "apps/rabbit-mq-process/src",
+      "root": "apps/rmq-process",
+      "entryFile": "main",
+      "sourceRoot": "apps/rmq-process/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/rabbit-mq-process/tsconfig.app.json"
+        "tsConfigPath": "apps/rmq-process/tsconfig.app.json"
+      }
+    },
+    "redis-process": {
+      "type": "application",
+      "root": "apps/redis-process",
+      "entryFile": "main",
+      "sourceRoot": "apps/redis-process/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/redis-process/tsconfig.app.json"
       }
     }
   }

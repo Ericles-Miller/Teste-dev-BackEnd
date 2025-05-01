@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ManagerFileController } from './manager-file.controller';
-import { ManagerFileService } from './manager-file.service';
+import { ManagerFileController } from './Manager-file.controller';
+import { ManagerFileService } from './Manager-file.service';
 
 describe('ManagerFileController', () => {
   let controller: ManagerFileController;
