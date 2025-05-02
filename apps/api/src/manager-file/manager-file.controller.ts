@@ -17,7 +17,7 @@ export class ManagerFileController {
   })
   @Post()
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Res() response): Promise<Response> {
-    const uploadId = await this.managerFileService.processStream(file);
+    const uploadId = await this.managerFileService.uploadFile(file);
 
     return response.status(201).json({
       message: 'File received successfully. Processing started.',
