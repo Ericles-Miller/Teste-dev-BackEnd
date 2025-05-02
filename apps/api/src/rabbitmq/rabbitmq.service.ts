@@ -1,10 +1,12 @@
 import { Injectable, InternalServerErrorException, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { RabbitMqConfig } from './rabbitmq.config';
 import { CreateUserDto } from '../user/dto/create-user.dto';
+import { AwsService } from '../aws/aws.service';
+import { EStatusFile } from '../manager-file/status-file.enum';
 
 @Injectable()
 export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
-  constructor() {}
+  constructor(private readonly awsService: AwsService) {}
 
   async onModuleInit() {
     await RabbitMqConfig.connect();
@@ -21,6 +23,8 @@ export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
         batch,
       };
 
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessInProgress);
+
       await RabbitMqConfig.publishMessage({
         routingKey: 'processFile',
         message,
@@ -33,24 +37,8 @@ export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
 
       return true;
     } catch (error) {
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessError);
       throw new InternalServerErrorException(error);
     }
   }
-
-  // async sendToQueueUploadFile({ message }: ProducerDto): Promise<boolean> {
-  //   try {
-  //     await RabbitMqConfig.publishMessage({
-  //       routingKey: 'uploadFile',
-  //       message: message,
-  //       options: {
-  //         persistent: true,
-  //         queueName: 'uploadFile',
-  //         durable: true,
-  //       },
-  //     });
-  //     return true;
-  //   } catch (error) {
-  //     throw new InternalServerErrorException(error);
-  //   }
-  // }
 }
