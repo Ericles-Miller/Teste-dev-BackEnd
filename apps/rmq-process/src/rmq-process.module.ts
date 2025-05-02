@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'apps/api/src/user/entities/user.entity';
 import { ConfigModule } from '@nestjs/config';
 import { dataSourceOptions } from 'apps/api/src/database/database.provider';
+import { AwsModule } from 'apps/api/src/aws/aws.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { dataSourceOptions } from 'apps/api/src/database/database.provider';
     TypeOrmModule.forRoot(dataSourceOptions),
     TypeOrmModule.forFeature([User]),
     UserModule,
+    AwsModule,
   ],
   controllers: [],
   providers: [ConsumerService],

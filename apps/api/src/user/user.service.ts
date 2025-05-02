@@ -3,15 +3,18 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { AwsService } from '../aws/aws.service';
+import { EStatusFile } from '../manager-file/status-file.enum';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly awsService: AwsService,
   ) {}
 
-  async createMany(createUserDto: CreateUserDto[]): Promise<void> {
+  async createMany(createUserDto: CreateUserDto[], uploadId: string): Promise<void> {
     const queryRunner = this.userRepository.manager.connection.createQueryRunner();
 
     await queryRunner.connect();
@@ -22,9 +25,12 @@ export class UserService {
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner.rollbackTransaction();
+
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessCompleted);
       throw error;
     } finally {
       await queryRunner.release();
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessCompleted);
     }
   }
 
