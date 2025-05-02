@@ -26,7 +26,7 @@ export class UserService {
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
-      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessCompleted);
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessError);
       throw error;
     } finally {
       await queryRunner.release();

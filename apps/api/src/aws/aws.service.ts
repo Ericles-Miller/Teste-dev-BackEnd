@@ -22,8 +22,6 @@ export class AwsService implements OnModuleInit {
   async publishProcessStatus(uploadId: string, status: EStatusFile): Promise<string> {
     const messageId = await this.snsConfig.publishProcessStatus(uploadId, status);
 
-    // Simular o comportamento do Lambda processando a mensagem
-    // Em produção, o Lambda seria invocado pela AWS
     await this.fileStatusService.processStatusNotification({
       uploadId,
       status,

@@ -21,6 +21,7 @@ export class ManagerFileService {
     const uploadId = uuid();
 
     if (!file || !file.buffer) {
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessError);
       throw new BadRequestException('Invalid file');
     }
 
@@ -42,6 +43,7 @@ export class ManagerFileService {
     } catch (error) {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessError);
       if (error instanceof BadRequestException) throw error;
 
       throw new InternalServerErrorException('Error to process file', error);
@@ -52,6 +54,7 @@ export class ManagerFileService {
     let processedCount = 0;
 
     if (!fs.existsSync(filePath)) {
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessError);
       throw new BadRequestException(`Not Found File: ${filePath}`);
     }
 
@@ -94,6 +97,10 @@ export class ManagerFileService {
 
         batch.push(dataRow);
         processedCount++;
+
+        if (processedCount % 5000 === 0) {
+          await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessInProgress);
+        }
 
         if (batch.length >= 1000) {
           fileStream.pause();
