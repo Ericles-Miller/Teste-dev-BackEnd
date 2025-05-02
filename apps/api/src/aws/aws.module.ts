@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AwsService } from './aws.service';
 import { SQSClient } from '@aws-sdk/client-sqs';
-import { SnsConfig } from '../config/sns.config';
+import { SnsConfig } from './config/sns.config';
+import { LambdaConfig } from './config/lambda.config';
 import { FileStatusModule } from '../file-status/file-status.module';
 
 @Module({
@@ -10,6 +11,7 @@ import { FileStatusModule } from '../file-status/file-status.module';
   providers: [
     AwsService,
     SnsConfig,
+    LambdaConfig,
     {
       provide: SQSClient,
       useFactory: () => {

@@ -22,6 +22,7 @@
     "test:e2e": "jest --config ./apps/challenge-contract-flow/test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.799.0",
     "@aws-sdk/client-sns": "^3.799.0",
     "@aws-sdk/client-sqs": "^3.799.0",
     "@nestjs-plus/rabbitmq": "^1.4.4",
@@ -35,6 +36,7 @@
     "@nestjs/typeorm": "^10.0.2",
     "@ssut/nestjs-sqs": "^3.0.1",
     "@types/aws-sdk": "^2.7.4",
+    "@types/redis": "^4.0.11",
     "@types/uuid": "^10.0.0",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.5",
@@ -46,6 +48,7 @@
     "ioredis": "^5.4.1",
     "nestjs-form-data": "^1.9.93",
     "pg": "^8.13.1",
+    "redis": "^5.0.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
