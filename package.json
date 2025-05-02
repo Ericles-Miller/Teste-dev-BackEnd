@@ -22,6 +22,7 @@
     "test:e2e": "jest --config ./apps/challenge-contract-flow/test/jest-e2e.json"
   },
   "dependencies": {
+    "@aws-sdk/client-sns": "^3.799.0",
     "@aws-sdk/client-sqs": "^3.799.0",
     "@nestjs-plus/rabbitmq": "^1.4.4",
     "@nestjs/common": "^10.0.0",

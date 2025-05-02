@@ -2,7 +2,7 @@ import { Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/
 import { queues } from 'apps/api/src/rabbitmq/queue.constants';
 import { RabbitMqConfig } from 'apps/api/src/rabbitmq/rabbitmq.config';
 import { SendToQueueProcessFileDto } from 'apps/api/src/rabbitmq/dtos/send-to-queue-process-file.dto';
-import { S3Config } from 'apps/api/src/config/s3.config';
+import { S3Config } from 'apps/api/src/aws/config/s3.config';
 import { UserService } from 'apps/api/src/user/user.service';
 
 @Injectable()

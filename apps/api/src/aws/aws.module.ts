@@ -1,23 +1,15 @@
 import { Module } from '@nestjs/common';
 import { AwsService } from './aws.service';
-import { SqsModule } from '@ssut/nestjs-sqs';
 import { SQSClient } from '@aws-sdk/client-sqs';
+import { SnsConfig } from '../config/sns.config';
+import { FileStatusModule } from '../file-status/file-status.module';
 
 @Module({
-  imports: [
-    SqsModule.register({
-      consumers: [
-        {
-          name: process.env.QUEUE,
-          queueUrl: process.env.AWS_QUEUE_URL,
-          region: process.env.AWS_REGION,
-        },
-      ],
-    }),
-  ],
+  imports: [FileStatusModule],
   controllers: [],
   providers: [
     AwsService,
+    SnsConfig,
     {
       provide: SQSClient,
       useFactory: () => {

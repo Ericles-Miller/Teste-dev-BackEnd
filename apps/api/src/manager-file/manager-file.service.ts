@@ -7,15 +7,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Transform, Writable } from 'stream';
 import { CreateUserDto } from '../user/dto/create-user.dto';
+import { AwsService } from '../aws/aws.service';
+import { EStatusFile } from './status-file.enum';
 
 @Injectable()
 export class ManagerFileService {
-  private readonly CHUNK_SIZE = 1024 * 1024;
-  private readonly BATCH_SIZE = 10000;
+  constructor(
+    private readonly rabbitMqService: RabbitMqService,
+    private readonly awsService: AwsService,
+  ) {}
 
-  constructor(private readonly rabbitMqService: RabbitMqService) {}
-
-  async processStream(file: Express.Multer.File): Promise<string> {
+  async uploadFile(file: Express.Multer.File): Promise<string> {
     const uploadId = uuid();
 
     if (!file || !file.buffer) {
@@ -30,7 +32,7 @@ export class ManagerFileService {
     try {
       fs.writeFileSync(filePath, file.buffer);
 
-      //await this.validateCsvHeaders(filePath);
+      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessNotInitialized);
 
       this.processFile(filePath, uploadId)
         .then(() => {})
@@ -97,7 +99,7 @@ export class ManagerFileService {
           fileStream.pause();
           await this.sendToQueue(uploadId, batch);
 
-          //self.redisService.instance.emit('set-status', EStatus.PROCESS);
+          await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessInProgress);
 
           console.log(`Send batch ${batch.length}. Total process: ${processedCount}`);
           batch.length = 0;
@@ -115,6 +117,8 @@ export class ManagerFileService {
         .on('finish', async () => {
           if (batch.length > 0) await this.sendToQueue(uploadId, batch);
 
+          await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessCompleted);
+
           if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
           resolve();
         })
@@ -125,38 +129,4 @@ export class ManagerFileService {
   private async sendToQueue(uploadId: string, batch: CreateUserDto[]): Promise<void> {
     await this.rabbitMqService.sendToQueueProcessFile(uploadId, batch);
   }
-
-  // private async validateCsvHeaders(filePath: string): Promise<string[]> {
-  //   return new Promise((resolve, reject) => {
-  //     const stream = createReadStream(filePath)
-  //       .pipe(csv())
-  //       .on('headers', (headers: string[]) => {
-  //         const requiredHeaders = [
-  //           'Gender',
-  //           'NameSet',
-  //           'Title',
-  //           'GivenName',
-  //           'Surname',
-  //           'StreetAddress',
-  //           'City',
-  //           'EmailAddress',
-  //           'TropicalZodiac',
-  //           'Occupation',
-  //           'Vehicle',
-  //           'CountryFull',
-  //         ];
-
-  //         const missingHeaders = requiredHeaders.filter((header) => !headers.includes(header));
-  //         if (missingHeaders.length > 0) {
-  //           reject(new BadRequestException(`Missing mandatory headers: ${missingHeaders.join(', ')}`));
-  //         }
-
-  //         stream.destroy();
-  //         resolve(headers);
-  //       })
-  //       .on('error', () => {
-  //         reject(new BadRequestException('Error reading CSV file'));
-  //       });
-  //   });
-  // }
 }
