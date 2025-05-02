@@ -10,7 +10,6 @@ export class FileStatusService implements OnModuleInit {
   constructor(private configService: ConfigService) {}
 
   onModuleInit() {
-    console.log('FileStatusService inicializado');
     // Aqui você inicializaria o cliente Redis em um ambiente real
     // this.redisClient = new Redis({...});
   }
