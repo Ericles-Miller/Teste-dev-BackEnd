@@ -13,8 +13,6 @@ export class AwsService implements OnModuleInit {
   async onModuleInit() {
     // Simular o comportamento de um Lambda assinando o tópico SNS
     // Em produção, isso seria feito pela infraestrutura AWS
-    console.log('Simulando assinatura do tópico SNS para processamento de status');
-
     // Aqui você poderia implementar um mecanismo para receber as notificações
     // Como estamos em desenvolvimento, vamos apenas simular isso
   }

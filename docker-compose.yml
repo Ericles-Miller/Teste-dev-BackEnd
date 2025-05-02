@@ -1,4 +1,26 @@
 services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    restart: on-failure
+    stop_signal: SIGINT
+    stop_grace_period: 30s
+    init: true
+    ports:
+      - "127.0.0.1:4566:4566"            # LocalStack Gateway
+      - "127.0.0.1:4510-4559:4510-4559"  # external services port range
+    environment:
+      - DEBUG=1
+      - SERVICES=sns,s3,lambda
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LAMBDA_EXECUTOR=local
+      - PERSISTENCE=0
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
   db:
     image: postgres:15.3-alpine
     container_name: ChallengeFlow
@@ -28,8 +50,8 @@ services:
     stop_grace_period: 1m
     init: true
     ports:
-      - "127.0.0.1:15672:15672"
-      - "127.0.0.1:5672:5672"
+      - "127.0.0.1:15673:15672"
+      - "127.0.0.1:5673:5672"
     environment:
       - RABBITMQ_DEFAULT_USER=guest
       - RABBITMQ_DEFAULT_PASS=guest
@@ -59,30 +81,6 @@ services:
       timeout: 5s
       retries: 5
 
-  localstack:
-    image: localstack/localstack:latest
-    container_name: localstack
-    restart: on-failure
-    stop_signal: SIGINT
-    stop_grace_period: 30s
-    init: true
-    ports:
-      - "127.0.0.1:4566:4566"
-    environment:
-      - DEBUG=1
-      - SERVICES=s3,sqs,iam
-      - AWS_DEFAULT_REGION=us-east-1
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - TMPDIR=/tmp/localstack_tmp
-      - DISABLE_CORS_CHECKS=1
-      - SKIP_SSL_CERT_DOWNLOAD=1
-      - DOCKER_HOST=unix:///var/run/docker.sock
-      - LAMBDA_EXECUTOR=local
-      - PERSISTENCE=0
-      - CLEAR_TMP_FOLDER=0
-    tmpfs:
-      - /tmp/localstack_tmp
       
 volumes:
   pgdata:

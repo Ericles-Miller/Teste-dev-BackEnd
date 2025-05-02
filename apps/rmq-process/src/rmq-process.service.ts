@@ -4,14 +4,10 @@ import { RabbitMqConfig } from 'apps/api/src/rabbitmq/rabbitmq.config';
 import { SendToQueueProcessFileDto } from 'apps/api/src/rabbitmq/dtos/send-to-queue-process-file.dto';
 import { UserService } from 'apps/api/src/user/user.service';
 import { CreateUserDto } from 'apps/api/src/user/dto/create-user.dto';
-import { AwsService } from 'apps/api/src/aws/aws.service';
 
 @Injectable()
 export class ConsumerService implements OnModuleInit {
-  constructor(
-    private readonly userService: UserService,
-    private readonly awsService: AwsService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   async onModuleInit() {
     try {
