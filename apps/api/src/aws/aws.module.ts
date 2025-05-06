@@ -4,6 +4,7 @@ import { SQSClient } from '@aws-sdk/client-sqs';
 import { SnsConfig } from './config/sns.config';
 import { LambdaConfig } from './config/lambda.config';
 import { FileStatusModule } from '../file-status/file-status.module';
+import { S3Config } from './config/s3.config';
 
 @Module({
   imports: [FileStatusModule],
@@ -11,6 +12,7 @@ import { FileStatusModule } from '../file-status/file-status.module';
   providers: [
     AwsService,
     SnsConfig,
+    S3Config,
     LambdaConfig,
     {
       provide: SQSClient,

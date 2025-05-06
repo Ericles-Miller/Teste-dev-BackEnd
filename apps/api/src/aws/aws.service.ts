@@ -15,14 +15,11 @@ export class AwsService implements OnModuleInit {
   }
 
   async publishProcessStatus(uploadId: string, status: EStatusFile): Promise<string> {
-    // Publica a mensagem no SNS
     const messageId = await this.snsConfig.publishProcessStatus(uploadId, status);
 
-    // Invoca a Lambda para processar o status
     const message = {
       uploadId,
       status,
-      timestamp: new Date().toISOString(),
     };
 
     await this.lambdaConfig.invokeStatusProcessor(message);

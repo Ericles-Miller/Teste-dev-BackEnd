@@ -20,6 +20,21 @@ services:
       - PERSISTENCE=0
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./docker/localstack/init:/docker-entrypoint-initaws.d
+      - ./lambda/process-file-status:/tmp/lambda
+    command: >
+      sh -c "
+      /usr/local/bin/docker-entrypoint.sh start &
+      sleep 10 &&
+      chmod +x /docker-entrypoint-initaws.d/init.sh &&
+      /docker-entrypoint-initaws.d/init.sh &&
+      wait
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
 
   db:
     image: postgres:15.3-alpine
@@ -81,12 +96,10 @@ services:
       timeout: 5s
       retries: 5
 
-      
 volumes:
   pgdata:
   rabbitmq_data:
   redis-data:
-  localstack_data:
 
 networks:
   default:
