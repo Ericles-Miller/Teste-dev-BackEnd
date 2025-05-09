@@ -1,13 +1,13 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { EStatusFile } from '../manager-file/status-file.enum';
 import { SnsConfig } from './config/sns.config';
-import { LambdaConfig } from './config/lambda.config';
+import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class AwsService implements OnModuleInit {
   constructor(
     private readonly snsConfig: SnsConfig,
-    private readonly lambdaConfig: LambdaConfig,
+    private readonly redisService: RedisService,
   ) {}
 
   async onModuleInit() {
@@ -17,13 +17,7 @@ export class AwsService implements OnModuleInit {
   async publishProcessStatus(uploadId: string, status: EStatusFile): Promise<string> {
     const messageId = await this.snsConfig.publishProcessStatus(uploadId, status);
 
-    const message = {
-      uploadId,
-      status,
-    };
-
-    await this.lambdaConfig.invokeStatusProcessor(message);
-
+    await this.redisService.publish(uploadId, status);
     return messageId;
   }
 }

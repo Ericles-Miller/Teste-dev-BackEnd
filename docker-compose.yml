@@ -11,17 +11,17 @@ services:
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     environment:
       - DEBUG=1
-      - SERVICES=sns,s3,lambda
+      - SERVICES=sns
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - DOCKER_HOST=unix:///var/run/docker.sock
-      - LAMBDA_EXECUTOR=local
-      - PERSISTENCE=0
+      - PERSISTENCE=1
+      - DATA_DIR=/var/lib/localstack/data
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
       - ./docker/localstack/init:/docker-entrypoint-initaws.d
-      - ./lambda/process-file-status:/tmp/lambda
+      - localstack_data:/var/lib/localstack/data
     command: >
       sh -c "
       /usr/local/bin/docker-entrypoint.sh start &
@@ -100,6 +100,7 @@ volumes:
   pgdata:
   rabbitmq_data:
   redis-data:
+  localstack_data:
 
 networks:
   default:

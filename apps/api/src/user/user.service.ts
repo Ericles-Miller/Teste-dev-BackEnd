@@ -14,7 +14,11 @@ export class UserService {
     private readonly awsService: AwsService,
   ) {}
 
-  async createMany(createUserDto: CreateUserDto[], uploadId: string): Promise<void> {
+  async createMany(
+    createUserDto: CreateUserDto[],
+    uploadId: string,
+    isLastBatch: boolean = false,
+  ): Promise<void> {
     const queryRunner = this.userRepository.manager.connection.createQueryRunner();
 
     await queryRunner.connect();
@@ -23,14 +27,16 @@ export class UserService {
     try {
       await queryRunner.manager.save(User, createUserDto);
       await queryRunner.commitTransaction();
+
+      if (isLastBatch) {
+        await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessCompleted);
+      }
     } catch (error) {
       await queryRunner.rollbackTransaction();
-
       await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessError);
       throw error;
     } finally {
       await queryRunner.release();
-      await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessCompleted);
     }
   }
 

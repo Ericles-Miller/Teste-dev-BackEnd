@@ -1,5 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { RedisConfig } from './redis.config';
+import { EStatusFile } from '../manager-file/status-file.enum';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
@@ -14,7 +15,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     console.log('Redis Service destroyed');
   }
 
-  async publish(key: string, value: any, expirationTime?: number): Promise<void> {
+  async publish(key: string, value: EStatusFile, expirationTime?: number): Promise<void> {
     return this.redisConfig.publish(key, value, expirationTime);
   }
 
