@@ -18,7 +18,6 @@ export class ConsumerService implements OnModuleInit {
     try {
       await RabbitMqConfig.connect();
       await this.setupConsumers();
-      // await S3Config.ensureBucketExists();
     } catch (error) {
       throw new InternalServerErrorException('Error to started service:', error);
     }
@@ -62,22 +61,8 @@ export class ConsumerService implements OnModuleInit {
   }
 
   private async processMessage({ batch, uploadId, isLastBatch }: SendToQueueProcessFileDto): Promise<void> {
-    // await this.saveToS3(uploadId, batch); -- vamos salvar o arquivo no s3 quando for completo o funcionamento
     await this.saveToDB(batch, uploadId, isLastBatch);
   }
-
-  // private async saveToS3(uploadId: string, batch: any[]): Promise<void> {
-  //   const batchId = Date.now();
-  //   const key = `uploads/${uploadId}/batch-${batchId}.json`;
-
-  //   try {
-  //     await S3Config.saveObject(key, batch);
-  //     console.log(`Batch salvo no S3: ${key}`);
-  //   } catch (error) {
-  //     console.error(`Erro ao salvar batch no S3: ${key}`, error);
-  //     throw error;
-  //   }
-  // }
 
   private async saveToDB(batch: CreateUserDto[], uploadId: string, isLastBatch: boolean): Promise<void> {
     try {
