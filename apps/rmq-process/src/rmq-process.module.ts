@@ -6,6 +6,7 @@ import { User } from 'apps/api/src/user/entities/user.entity';
 import { ConfigModule } from '@nestjs/config';
 import { dataSourceOptions } from 'apps/api/src/database/database.provider';
 import { AwsModule } from 'apps/api/src/aws/aws.module';
+import { RedisModule } from 'apps/api/src/redis/redis.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AwsModule } from 'apps/api/src/aws/aws.module';
     TypeOrmModule.forFeature([User]),
     UserModule,
     AwsModule,
+    RedisModule,
   ],
   controllers: [],
   providers: [ConsumerService],

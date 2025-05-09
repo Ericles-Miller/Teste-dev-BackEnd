@@ -5,20 +5,18 @@ import { dataSourceOptions } from './database/database.provider';
 import { ManagerFileModule } from './manager-file/manager-file.module';
 import { RabbitmqModule } from './rabbitmq/rabbitmq.module';
 import { RedisModule } from './redis/redis.module';
-import { RedisService } from './redis/redis.service';
 import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     RabbitmqModule,
-
     TypeOrmModule.forRoot(dataSourceOptions),
     ManagerFileModule,
     UserModule,
     RedisModule,
   ],
   controllers: [],
-  providers: [RedisService],
+  providers: [],
 })
 export class AppModule {}

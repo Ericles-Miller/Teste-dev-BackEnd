@@ -11,15 +11,30 @@ services:
       - "127.0.0.1:4510-4559:4510-4559"  # external services port range
     environment:
       - DEBUG=1
-      - SERVICES=sns,s3,lambda
+      - SERVICES=sns
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - DOCKER_HOST=unix:///var/run/docker.sock
-      - LAMBDA_EXECUTOR=local
-      - PERSISTENCE=0
+      - PERSISTENCE=1
+      - DATA_DIR=/var/lib/localstack/data
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - ./docker/localstack/init:/docker-entrypoint-initaws.d
+      - localstack_data:/var/lib/localstack/data
+    command: >
+      sh -c "
+      /usr/local/bin/docker-entrypoint.sh start &
+      sleep 10 &&
+      chmod +x /docker-entrypoint-initaws.d/init.sh &&
+      /docker-entrypoint-initaws.d/init.sh &&
+      wait
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
 
   db:
     image: postgres:15.3-alpine
@@ -81,7 +96,6 @@ services:
       timeout: 5s
       retries: 5
 
-      
 volumes:
   pgdata:
   rabbitmq_data:

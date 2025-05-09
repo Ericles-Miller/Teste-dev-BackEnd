@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { RabbitMqService } from '../rabbitmq/rabbitmq.service';
 import { createReadStream } from 'fs';
@@ -9,12 +14,15 @@ import { Transform, Writable } from 'stream';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { AwsService } from '../aws/aws.service';
 import { EStatusFile } from './status-file.enum';
+import { RedisService } from '../redis/redis.service';
+import { ResponseProcessFileDto } from './dto/response-process-file.dto';
 
 @Injectable()
 export class ManagerFileService {
   constructor(
     private readonly rabbitMqService: RabbitMqService,
     private readonly awsService: AwsService,
+    private readonly redisService: RedisService,
   ) {}
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
@@ -98,13 +106,9 @@ export class ManagerFileService {
         batch.push(dataRow);
         processedCount++;
 
-        if (processedCount % 5000 === 0) {
-          await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessInProgress);
-        }
-
         if (batch.length >= 1000) {
           fileStream.pause();
-          await this.sendToQueue(uploadId, batch);
+          await this.sendToQueue(uploadId, batch, false);
 
           await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessInProgress);
 
@@ -122,9 +126,12 @@ export class ManagerFileService {
         .pipe(writableStreamFile)
         .pipe(writeTableStream)
         .on('finish', async () => {
-          if (batch.length > 0) await this.sendToQueue(uploadId, batch);
-
-          await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessCompleted);
+          if (batch.length > 0) {
+            await this.sendToQueue(uploadId, batch, true);
+            console.log(`Send batch ${batch.length}. Total process: ${processedCount}`);
+          } else {
+            await this.sendToQueue(uploadId, [], true);
+          }
 
           if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
           resolve();
@@ -133,7 +140,15 @@ export class ManagerFileService {
     });
   }
 
-  private async sendToQueue(uploadId: string, batch: CreateUserDto[]): Promise<void> {
-    await this.rabbitMqService.sendToQueueProcessFile(uploadId, batch);
+  private async sendToQueue(uploadId: string, batch: CreateUserDto[], isLastBatch: boolean): Promise<void> {
+    await this.rabbitMqService.sendToQueueProcessFile(uploadId, batch, isLastBatch);
+  }
+
+  async getStatusProcessFile(uploadId: string): Promise<ResponseProcessFileDto> {
+    const status = await this.redisService.get(uploadId);
+
+    if (!status) throw new NotFoundException('uploadId not found');
+
+    return { status, uploadId };
   }
 }

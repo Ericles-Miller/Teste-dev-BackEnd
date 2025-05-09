@@ -16,11 +16,16 @@ export class RabbitMqService implements OnModuleInit, OnModuleDestroy {
     await RabbitMqConfig.closeConnection();
   }
 
-  async sendToQueueProcessFile(uploadId: string, batch: CreateUserDto[]): Promise<boolean> {
+  async sendToQueueProcessFile(
+    uploadId: string,
+    batch: CreateUserDto[],
+    isLastBatch: boolean,
+  ): Promise<boolean> {
     try {
       const message = {
         uploadId,
         batch,
+        isLastBatch,
       };
 
       await this.awsService.publishProcessStatus(uploadId, EStatusFile.ProcessInProgress);
