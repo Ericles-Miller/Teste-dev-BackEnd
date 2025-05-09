@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { EStatusFile } from './status-file.enum';
+import { EStatusFile } from '../status-file.enum';
 
 export class ResponseProcessFileDto {
   @ApiProperty()
@@ -7,7 +7,4 @@ export class ResponseProcessFileDto {
 
   @ApiProperty()
   status: EStatusFile;
-
-  @ApiProperty()
-  timeExecutionProcessFile: string;
 }

@@ -4,16 +4,20 @@ import { RabbitMqConfig } from 'apps/api/src/rabbitmq/rabbitmq.config';
 import { SendToQueueProcessFileDto } from 'apps/api/src/rabbitmq/dtos/send-to-queue-process-file.dto';
 import { UserService } from 'apps/api/src/user/user.service';
 import { CreateUserDto } from 'apps/api/src/user/dto/create-user.dto';
+import { RedisService } from 'apps/api/src/redis/redis.service';
+import { EStatusFile } from 'apps/api/src/manager-file/status-file.enum';
 
 @Injectable()
 export class ConsumerService implements OnModuleInit {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async onModuleInit() {
     try {
       await RabbitMqConfig.connect();
       await this.setupConsumers();
-      // await S3Config.ensureBucketExists();
     } catch (error) {
       throw new InternalServerErrorException('Error to started service:', error);
     }
@@ -56,29 +60,16 @@ export class ConsumerService implements OnModuleInit {
     }
   }
 
-  private async processMessage({ batch, uploadId }: SendToQueueProcessFileDto): Promise<void> {
-    try {
-      // await this.saveToS3(uploadId, batch); -- vamos salvar o arquivo no s3 quando for completo o funcionamento
-      await this.saveToDB(batch, uploadId);
-    } catch (error) {
-      throw new InternalServerErrorException('Error to process file and save in database', error);
-    }
+  private async processMessage({ batch, uploadId, isLastBatch }: SendToQueueProcessFileDto): Promise<void> {
+    await this.saveToDB(batch, uploadId, isLastBatch);
   }
 
-  // private async saveToS3(uploadId: string, batch: any[]): Promise<void> {
-  //   const batchId = Date.now();
-  //   const key = `uploads/${uploadId}/batch-${batchId}.json`;
-
-  //   try {
-  //     await S3Config.saveObject(key, batch);
-  //     console.log(`Batch salvo no S3: ${key}`);
-  //   } catch (error) {
-  //     console.error(`Erro ao salvar batch no S3: ${key}`, error);
-  //     throw error;
-  //   }
-  // }
-
-  private async saveToDB(batch: CreateUserDto[], uploadId: string): Promise<void> {
-    await this.userService.createMany(batch, uploadId);
+  private async saveToDB(batch: CreateUserDto[], uploadId: string, isLastBatch: boolean): Promise<void> {
+    try {
+      await this.userService.createMany(batch, uploadId, isLastBatch);
+    } catch (error) {
+      await this.redisService.publish(uploadId, EStatusFile.ProcessError);
+      throw new InternalServerErrorException('Error to save file in database', error);
+    }
   }
 }

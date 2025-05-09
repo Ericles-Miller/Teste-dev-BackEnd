@@ -1,15 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AwsService } from './aws.service';
 import { SQSClient } from '@aws-sdk/client-sqs';
-import { SnsConfig } from '../config/sns.config';
-import { FileStatusModule } from '../file-status/file-status.module';
+import { SnsConfig } from './config/sns.config';
+import { S3Config } from './config/s3.config';
+import { RedisModule } from '../redis/redis.module';
 
 @Module({
-  imports: [FileStatusModule],
+  imports: [RedisModule],
   controllers: [],
   providers: [
     AwsService,
     SnsConfig,
+    S3Config,
     {
       provide: SQSClient,
       useFactory: () => {
