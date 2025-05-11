@@ -18,17 +18,17 @@ Desenvolver uma aplicação que atenda aos seguintes requisitos **funcionais** e
 
 ### 1. 📤 Upload de Arquivo
 - **Endpoint de Upload**:
-  - Fazer o upload da planilha _baseSerImportada.csv_ na raiz do projeto.
-  - A planilha conterá 100 mil linhas de dados a serem processados.
-  - **Swagger**: O upload deve ser possível pela interface interativa da documentação Swagger.
+  - Fazer o upload da planilha _baseSerImportada.csv_ na raiz do projeto. --ok 
+  - A planilha conterá 100 mil linhas de dados a serem processados. --ok 
+  - **Swagger**: O upload deve ser possível pela interface interativa da documentação Swagger. --ok 
 
 - **⚡ Processamento Assíncrono**:
-  - Processar o arquivo utilizando **filas** (ex: BullMQ, RabbitMQ) para garantir que o upload não bloqueie a thread principal.
-  - O usuário deve receber uma resposta imediatamente após o envio do arquivo.
+  - Processar o arquivo utilizando **filas** (ex: BullMQ, RabbitMQ) para garantir que o upload não bloqueie a thread principal. --ok 
+  - O usuário deve receber uma resposta imediatamente após o envio do arquivo. --ok 
 
 - **📊 Feedback de Status**:
-  - Implementar uma forma de verificar o status do processamento (ex: "em andamento", "concluído", "erro").
-  - O feedback pode ser fornecido por polling em um endpoint específico ou via websockets 🔄.
+  - Implementar uma forma de verificar o status do processamento (ex: "em andamento", "concluído", "erro"). --ok 
+  - O feedback pode ser fornecido por polling em um endpoint específico ou via websockets 🔄. --ok 
 
 ### 2. 🔎 API de Dados
 - **Endpoints**:

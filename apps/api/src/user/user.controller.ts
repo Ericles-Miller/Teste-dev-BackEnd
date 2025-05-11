@@ -1,24 +1,30 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { UserService } from './user.service';
 import { User } from './entities/user.entity';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { PaginatedResponseDto } from './dto/pagination-response.dto';
+import { CursorPaginationDto } from './dto/cursor-pagination.dto';
+import { FilterDto } from './dto/filter.dto';
 
 @ApiTags('users')
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @ApiOperation({
-    summary: 'Get all users',
-    description: 'Get all users from the database',
-  })
+  @Get()
+  @ApiOperation({ summary: 'Listar usuários com paginação baseada em cursor' })
   @ApiResponse({
     status: 200,
-    type: [User],
+    description: 'Lista de usuários paginada',
+    type: PaginatedResponseDto<User>,
   })
-  @Get()
-  async findAll(): Promise<User[]> {
-    return await this.userService.findAll();
+  @ApiQuery({ type: CursorPaginationDto })
+  @ApiQuery({ type: FilterDto })
+  async findAll(
+    @Query() pagination: CursorPaginationDto,
+    @Query() filters: FilterDto,
+  ): Promise<PaginatedResponseDto<User>> {
+    return await this.userService.findAll(pagination, filters);
   }
 
   @Get(':id')
